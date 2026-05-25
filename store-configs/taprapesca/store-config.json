@@ -1,0 +1,65 @@
+{
+  "store_id": "",
+  "nome": "",
+  "dominio": "",
+  "regime": "SN",
+
+  "tema": {
+    "cor_primaria": "#000000",
+    "cor_secundaria": "#ffffff",
+    "logo_url": "",
+    "favicon_url": ""
+  },
+
+  "bling": {
+    "client_id": "env:BLING_CLIENT_ID",
+    "client_secret": "env:BLING_CLIENT_SECRET",
+    "access_token": "env:BLING_ACCESS_TOKEN",
+    "refresh_token": "env:BLING_REFRESH_TOKEN"
+  },
+
+  "mercado_pago": {
+    "access_token": "env:MP_ACCESS_TOKEN",
+    "public_key": "env:MP_PUBLIC_KEY",
+    "webhook_secret": "env:MP_WEBHOOK_SECRET"
+  },
+
+  "melhor_envio": {
+    "token": "env:ME_TOKEN",
+    "sandbox": false,
+    "from_nome": "",
+    "from_cep": "",
+    "from_rua": "",
+    "from_numero": "",
+    "from_bairro": "",
+    "from_cidade": "",
+    "from_uf": ""
+  },
+
+  "resend": {
+    "api_key": "env:RESEND_API_KEY",
+    "from": ""
+  },
+
+  "precificacao": {
+    "margem_ml": 0.30,
+    "margem_shopee": 0.28,
+    "margem_site": 0.40,
+    "desconto_pix": 0.05,
+    "taxa_ml": 0.14,
+    "taxa_shopee": 0.16
+  },
+
+  "analytics": {
+    "gtm_id": "",
+    "meta_pixel_id": "",
+    "ga4_id": "",
+    "tiktok_pixel_id": "",
+    "google_ads_id": ""
+  },
+
+  "supabase": {
+    "url": "env:NEXT_PUBLIC_SUPABASE_URL",
+    "anon_key": "env:NEXT_PUBLIC_SUPABASE_ANON_KEY"
+  }
+}
