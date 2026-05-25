@@ -2,68 +2,61 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ScrollReveal from "@/components/ScrollReveal";
 import { CartProvider } from "@/contexts/CartContext";
+import { StoreProvider } from "@/contexts/StoreContext";
 import { GTMScript, GTMNoScript } from "@/components/analytics/GTM";
 import { MetaPixel } from "@/components/analytics/MetaPixel";
 import { GoogleAds } from "@/components/analytics/GoogleAds";
+import { resolveStoreId } from "@/lib/store-id";
+import { loadStoreConfig } from "@/lib/store-config";
 
-export const metadata: Metadata = {
-  title: 'Tá Pra Pesca — Kits completos de pesca',
-  description: 'Equipamentos de pesca com procedência. Kits montados com produtos compatíveis e frete grátis em todo o Brasil.',
-  keywords: [
-    "kit pesca",
-    "kit pesca água doce",
-    "vara molinete kit",
-    "kit pesqueiro",
-    "kit pesca tilápia",
-    "pesca rio",
-    "CMIK",
-    "Enjoylure",
-  ],
-  metadataBase: new URL('https://taprapesca.com.br'),
-  openGraph: {
-    title: 'Tá Pra Pesca — Kits completos de pesca',
-    description: 'Equipamentos de pesca com procedência. Kits montados com produtos compatíveis e frete grátis em todo o Brasil.',
-    url: 'https://taprapesca.com.br',
-    siteName: 'Tá Pra Pesca',
-    locale: 'pt_BR',
-    type: 'website',
-    images: [
-      {
-        url: '/og-image-v3.png',
-        width: 1235,
-        height: 1235,
-        alt: 'Tá Pra Pesca — Kits completos de pesca',
-      }
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Tá Pra Pesca — Kits completos de pesca',
-    description: 'Equipamentos de pesca com procedência. Frete grátis em todo o Brasil.',
-    images: ['/og-image-v3.png'],
-  },
-};
+export function generateMetadata(): Metadata {
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
+
+  return {
+    title: config.nome,
+    metadataBase: new URL(`https://${config.dominio}`),
+    openGraph: {
+      title: config.nome,
+      url: `https://${config.dominio}`,
+      siteName: config.nome,
+      locale: 'pt_BR',
+      type: 'website',
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: config.nome }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: config.nome,
+      images: ['/og-image.png'],
+    },
+  }
+}
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
-  const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
-  const adsId = process.env.NEXT_PUBLIC_GA_ADS_ID;
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
+
+  const gtmId = config.analytics.gtm_id || undefined
+  const pixelId = config.analytics.meta_pixel_id || undefined
+  const adsId = config.analytics.google_ads_id || undefined
 
   return (
     <html lang="pt-BR">
       <body>
         {gtmId && <GTMNoScript gtmId={gtmId} />}
-        <CartProvider>
-          {gtmId && <GTMScript gtmId={gtmId} />}
-          {pixelId && <MetaPixel pixelId={pixelId} />}
-          {adsId && <GoogleAds adsId={adsId} />}
-          {children}
-          <ScrollReveal />
-        </CartProvider>
+        <StoreProvider config={config}>
+          <CartProvider>
+            {gtmId && <GTMScript gtmId={gtmId} />}
+            {pixelId && <MetaPixel pixelId={pixelId} />}
+            {adsId && <GoogleAds adsId={adsId} />}
+            {children}
+            <ScrollReveal />
+          </CartProvider>
+        </StoreProvider>
       </body>
     </html>
   );

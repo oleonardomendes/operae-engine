@@ -205,7 +205,7 @@ operae-engine/
 3. Todas as funções recebem `config: StoreConfig` como primeiro parâmetro
 4. Nunca ler `process.env` dentro do módulo
 5. Adicionar entrada na tabela de módulos do `README.md`
-6. Testar isolado: `npx tsx scripts/test-module.ts -- <nome> taprapesca`
+6. Testar isolado: `npx tsx scripts/test-module.ts -- <nome> <store-id>`
 
 ---
 
@@ -215,16 +215,47 @@ operae-engine/
 2. Adicionar os campos correspondentes ao `StoreConfig` e ao `store-config.json`
 3. Mover o código para `src/modules/<nome>/`
 4. Substituir leituras de `process.env` por `config.<campo>`
-5. Rodar o projeto e confirmar que o Tá Pra Pesca continua funcionando
+5. Rodar o projeto e confirmar que a loja de teste continua funcionando
 6. Busca global por `process.env.BLING`, `process.env.MP_`, `process.env.ME_` — nenhuma ocorrência deve restar dentro de módulos
+
+---
+
+## Regra 9 — Nenhum cliente hardcoded no código
+
+O operae-engine é uma plataforma, não uma loja.
+**NUNCA** use `store_id` com valor fixo no código (`'taprapesca'`, `'cliente-x'`, etc.).
+
+O `storeId` vem sempre de uma destas fontes:
+
+- **Rotas autenticadas:** `user.user_metadata.store_id` (via `createAuthClient()`)
+- **Webhooks:** query param `?store_id=` na URL registrada no provedor
+- **Rota OAuth:** query param `?store_id=` validado contra tabela `stores`
+- **Rotas de storefront (sem auth):** `loadStoreConfig()` lê `process.env.STORE_ID` do deployment
+
+```ts
+// ❌ NUNCA faça isso
+const storeId = 'taprapesca'
+
+// ✅ Rota autenticada
+const { data: { user } } = await createAuthClient().auth.getUser()
+const storeId = user?.user_metadata?.store_id
+
+// ✅ Webhook MP
+const storeId = new URL(req.url).searchParams.get('store_id')
+
+// ✅ Storefront (deployment-scoped)
+const config = loadStoreConfig() // lê STORE_ID do env
+```
+
+Qualquer `const storeId = 'valor-fixo'` é uma violação desta regra.
 
 ---
 
 ## Variável de ambiente que controla a loja ativa
 
 ```bash
-# .env.local na raiz
-STORE_ID=taprapesca
+# .env.local na raiz — define a loja do deployment de storefront
+STORE_ID=<store-id>
 ```
 
 O `loadStoreConfig()` usa `process.env.STORE_ID` para saber qual loja carregar.

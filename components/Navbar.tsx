@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useStore } from '@/contexts/StoreContext'
 
 const navStyles = `
   .nav {
@@ -54,6 +55,7 @@ const navStyles = `
 `;
 
 export default function Navbar() {
+  const config = useStore()
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -67,7 +69,7 @@ export default function Navbar() {
       <style>{navStyles}</style>
       <nav className={`nav${scrolled ? " scrolled" : ""}`}>
         <div className="nav-logo">
-          TÁ<span>.</span>PRA<span>.</span>PESCA
+          {config.nome}
         </div>
         <div className="nav-right">
           <Link href="#kits" className="nav-link">Kits</Link>

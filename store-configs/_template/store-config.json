@@ -1,7 +1,9 @@
 {
-  "store_id": "",
-  "nome": "",
-  "dominio": "",
+  "_instrucoes": "Copie este arquivo para store-configs/<store-id>/store-config.json e preencha os campos. Campos com 'env:VAR_NAME' leem de variáveis de ambiente. Este campo _instrucoes é ignorado em produção.",
+
+  "store_id": "<identificador-unico-da-loja>",
+  "nome": "<Nome da Loja>",
+  "dominio": "<dominio.com.br>",
   "regime": "SN",
 
   "tema": {
@@ -34,7 +36,7 @@
 
   "resend": {
     "api_key": "env:RESEND_API_KEY",
-    "from": ""
+    "from": "<Nome da Loja> <email@dominio.com.br>"
   },
 
   "precificacao": {
@@ -57,5 +59,12 @@
   "supabase": {
     "url": "env:NEXT_PUBLIC_SUPABASE_URL",
     "anon_key": "env:NEXT_PUBLIC_SUPABASE_ANON_KEY"
+  },
+
+  "contato": {
+    "email": "contato@<dominio.com.br>",
+    "whatsapp": "<DDI+DDD+numero, apenas dígitos, ex: 5511999999999>",
+    "instagram_url": "https://www.instagram.com/<handle>/",
+    "facebook_url": "https://www.facebook.com/<handle>/"
   }
 }

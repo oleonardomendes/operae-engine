@@ -22,15 +22,16 @@ export async function saveTokensToSupabase(
   }
 }
 
-const getValidToken = async (): Promise<string> => {
-  return getIntegrationToken('taprapesca', 'bling')
+const getValidToken = async (storeId: string): Promise<string> => {
+  return getIntegrationToken(storeId, 'bling')
 }
 
 export async function blingFetch(
+  storeId: string,
   endpoint: string,
   options?: RequestInit
 ): Promise<any> {
-  const token = await getValidToken()
+  const token = await getValidToken(storeId)
 
   const makeRequest = (accessToken: string) =>
     fetch(`${BLING_BASE}${endpoint}`, {
@@ -46,7 +47,7 @@ export async function blingFetch(
   let res = await makeRequest(token)
 
   if (res.status === 401) {
-    const newToken = await getValidToken()
+    const newToken = await getValidToken(storeId)
     res = await makeRequest(newToken)
   }
 

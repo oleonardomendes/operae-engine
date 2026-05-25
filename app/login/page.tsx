@@ -4,6 +4,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
+import { useStore } from '@/contexts/StoreContext'
 
 function traduzirErro(msg: string): string {
   if (msg.includes('Invalid login credentials')) return 'E-mail ou senha incorretos'
@@ -13,6 +14,7 @@ function traduzirErro(msg: string): string {
 }
 
 function LoginForm() {
+  const config = useStore()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [aba, setAba] = useState<'login' | 'cadastro'>(
@@ -64,7 +66,7 @@ function LoginForm() {
       password: senha,
       options: {
         data: { nome },
-        emailRedirectTo: 'https://taprapesca.com.br/auth/callback',
+        emailRedirectTo: `https://${config.dominio}/auth/callback`,
       },
     })
     setLoading(false)
@@ -83,7 +85,7 @@ function LoginForm() {
       <style>{styles}</style>
       <div className="lp-bg">
         <div className="lp-card">
-          <Link href="/" className="lp-logo">TÁ.PRA.PESCA</Link>
+          <Link href="/" className="lp-logo">{config.nome}</Link>
 
           <div className="lp-abas">
             <button

@@ -1,18 +1,34 @@
 import { MercadoPagoConfig, Payment } from 'mercadopago'
 import { NextResponse } from 'next/server'
 import { getMPAccessToken } from '@/lib/mercado-pago'
+import { createAuthClient } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request) {
   try {
+    const supabase = createAuthClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+    }
+
+    const storeId = user.user_metadata?.store_id
+    if (!storeId) {
+      return NextResponse.json(
+        { error: 'store_id não encontrado no usuário. Configure o onboarding.' },
+        { status: 400 }
+      )
+    }
+
     const body = await req.json()
     const { formData, amount, description, pedidoId } = body
 
-    // TODO: extrair storeId do contexto do usuário autenticado quando multi-tenant estiver ativo
-    const storeId = 'taprapesca'
     const accessToken = await getMPAccessToken(storeId)
     const client = new MercadoPagoConfig({ accessToken })
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
     const payment = new Payment(client)
     const result = await payment.create({
@@ -20,11 +36,11 @@ export async function POST(req: Request) {
         transaction_amount: Number(amount),
         description,
         payment_method_id: 'pix',
-        external_reference: pedidoId || '',
+        external_reference: `${storeId}:${pedidoId || ''}`,
         payer: {
-          email: formData?.payer?.email || 'pix@taprapesca.com.br',
+          email: formData?.payer?.email || user.email || 'pagamento@operae.com.br',
         },
-        notification_url: 'https://www.taprapesca.com.br/api/mp/webhook',
+        notification_url: `${appUrl}/api/mp/webhook?store_id=${storeId}`,
       },
     })
 

@@ -1,15 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import { useStore } from '@/contexts/StoreContext'
 
 export default function Newsletter() {
+  const config = useStore()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!email.trim()) return
-    window.location.href = `mailto:contato@taprapesca.com.br?subject=Cadastro%20Newsletter&body=E-mail%3A%20${encodeURIComponent(email)}`
+    const contactEmail = config.contato?.email ?? ''
+    window.location.href = `mailto:${contactEmail}?subject=Cadastro%20Newsletter&body=E-mail%3A%20${encodeURIComponent(email)}`
     setSent(true)
     setEmail('')
   }

@@ -67,6 +67,13 @@ export interface StoreConfig {
     url: string
     anon_key: string
   }
+
+  contato?: {
+    email?: string
+    whatsapp?: string
+    instagram_url?: string
+    facebook_url?: string
+  }
 }
 
 // ─── Resolver env vars ────────────────────────────────────────────────────────

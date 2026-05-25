@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { resolveStoreId } from '@/lib/store-id'
+import { loadStoreConfig } from '@/lib/store-config'
 
 export default function Footer() {
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
   const year = new Date().getFullYear();
 
   return (
@@ -23,7 +27,7 @@ export default function Footer() {
 
       <footer className="footer">
         <div className="footer-logo">
-          TÁ<span>.</span>PRA<span>.</span>PESCA
+          {config.nome}
         </div>
         <nav className="footer-links" aria-label="Links do rodapé">
           <Link href="#kits">Kits</Link>
@@ -31,7 +35,7 @@ export default function Footer() {
           <Link href="#faq">Dúvidas</Link>
         </nav>
         <div className="footer-copy">
-          © {year} Tá Pra Pesca — Todos os direitos reservados
+          © {year} {config.nome} — Todos os direitos reservados
         </div>
       </footer>
     </>

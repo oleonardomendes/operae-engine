@@ -1,10 +1,16 @@
 import type { Metadata } from 'next'
 import KitDetalhePage from '@/components/KitDetalhePage'
 import { kitsDetalhes } from '@/data/kitsDetalhes'
+import { resolveStoreId } from '@/lib/store-id'
+import { loadStoreConfig } from '@/lib/store-config'
 
-export const metadata: Metadata = {
-  title: 'Kit Rio & Tilápia — Tá Pra Pesca',
-  description: 'Kit completo para pesca de tilápia no pesqueiro. Molinete SE3000, vara 1,80m e linha inclusa. Frete grátis.',
+export function generateMetadata(): Metadata {
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
+  return {
+    title: `Kit Rio & Tilápia — ${config.nome}`,
+    description: 'Kit completo para pesca de tilápia no pesqueiro. Molinete SE3000, vara 1,80m e linha inclusa. Frete grátis.',
+  }
 }
 
 export default function Page() {

@@ -1,11 +1,9 @@
 import { blingFetch } from '@/lib/bling'
 import { supabase } from '@/lib/supabase'
+import { loadStoreConfig } from '@/lib/store-config'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
-
-const SITE_URL = 'https://taprapesca.com.br'
-const MARCA = 'Tá Pra Pesca'
 
 function escapeXml(val: unknown): string {
   return String(val ?? '')
@@ -49,7 +47,7 @@ function gerarDescricao(nome: string): string {
     complemento = 'Linha de pesca com alta resistência e baixa visibilidade na água.'
   }
 
-  return `${nome}. ${complemento} Compre com segurança na Tá Pra Pesca e receba em casa.`
+  return `${nome}. ${complemento}`
 }
 
 function lerEstoque(p: any): number {
@@ -64,8 +62,12 @@ function lerEstoque(p: any): number {
 
 export async function GET() {
   try {
+    const config = loadStoreConfig()
+    const SITE_URL = `https://${config.dominio}`
+    const MARCA = config.nome
+
     const [blingData, { data: customizacoes }] = await Promise.all([
-      blingFetch('/produtos?limite=100&pagina=1').catch(() => null),
+      blingFetch(config.store_id, '/produtos?limite=100&pagina=1').catch(() => null),
       supabase
         .from('produto_customizacoes')
         .select('bling_codigo, nome_custom, preco_custom, imagens, destaque, descricao_custom'),
@@ -111,7 +113,7 @@ export async function GET() {
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
-    <title>Tá Pra Pesca</title>
+    <title>${escapeXml(config.nome)}</title>
     <link>${SITE_URL}</link>
     <description>Equipamentos de pesca com procedência</description>
     <language>pt-BR</language>

@@ -2,10 +2,16 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import StoreHeader from '@/components/StoreHeader'
 import StoreFooter from '@/components/StoreFooter'
+import { resolveStoreId } from '@/lib/store-id'
+import { loadStoreConfig } from '@/lib/store-config'
 
-export const metadata: Metadata = {
-  title: 'Como Comprar — Tá Pra Pesca',
-  description: 'Passo a passo para comprar na Tá Pra Pesca.',
+export function generateMetadata(): Metadata {
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
+  return {
+    title: `Como Comprar — ${config.nome}`,
+    description: `Passo a passo para comprar na ${config.nome}.`,
+  }
 }
 
 const steps = [
@@ -40,6 +46,10 @@ const steps = [
 ]
 
 export default function ComoComprarPage() {
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
+  const waNumber = config.contato?.whatsapp ?? ''
+
   return (
     <>
       <StoreHeader />
@@ -91,13 +101,15 @@ export default function ComoComprarPage() {
             <p style={{ ...p, marginBottom: '20px' }}>
               Ficou com dúvida? Nossa equipe responde rápido.
             </p>
-            <a
-              href="https://wa.me/5515996177133"
-              target="_blank" rel="noopener noreferrer"
-              style={btnWpp}
-            >
-              Falar no WhatsApp →
-            </a>
+            {waNumber && (
+              <a
+                href={`https://wa.me/${waNumber}`}
+                target="_blank" rel="noopener noreferrer"
+                style={btnWpp}
+              >
+                Falar no WhatsApp →
+              </a>
+            )}
           </div>
         </div>
       </main>

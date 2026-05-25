@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
 import CartDrawer from '@/components/CartDrawer'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { useStore } from '@/contexts/StoreContext'
 
 const CATEGORIAS = [
   { label: 'Todos',       key: '' },
@@ -16,6 +17,7 @@ const CATEGORIAS = [
 ]
 
 export default function StoreHeader() {
+  const config = useStore()
   const [busca, setBusca] = useState('')
   const [searchAberto, setSearchAberto] = useState(false)
   const { totalItens, openCart } = useCart()
@@ -59,7 +61,7 @@ export default function StoreHeader() {
     }
   }
 
-  const waNumber = process.env.NEXT_PUBLIC_WA_NUMBER || ''
+  const waNumber = config.contato?.whatsapp ?? ''
   const inicial = userEmail ? userEmail[0].toUpperCase() : ''
 
   return (
@@ -71,7 +73,7 @@ export default function StoreHeader() {
         {/* Linha superior */}
         <div className="sh-top">
           <Link href="/" className="sh-logo">
-            TÁ<span>.</span>PRA<span>.</span>PESCA
+            {config.nome}
           </Link>
 
           <div className="sh-search">

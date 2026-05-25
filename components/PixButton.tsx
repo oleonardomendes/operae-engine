@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import PixQRCode from '@/components/PixQRCode'
+import { useStore } from '@/contexts/StoreContext'
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function PixButton({ kitNome, kitPreco, freteValor = 0, pedidoId }: Props) {
+  const config = useStore()
   const [pixData, setPixData] = useState<{ qrCode: string; qrCodeBase64: string; paymentId: string } | null>(null)
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
@@ -29,7 +31,7 @@ export default function PixButton({ kitNome, kitPreco, freteValor = 0, pedidoId 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          formData: { payer: { email: 'pix@taprapesca.com.br' } },
+          formData: { payer: { email: config.contato?.email ?? '' } },
           amount: Math.round((kitPreco * 0.95 + (freteValor || 0)) * 100) / 100,
           description: kitNome,
           pedidoId: pedidoId,

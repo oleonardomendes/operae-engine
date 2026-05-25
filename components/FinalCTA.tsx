@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { resolveStoreId } from '@/lib/store-id'
+import { loadStoreConfig } from '@/lib/store-config'
 
 export function FinalCTA() {
-  const waNumber = process.env.NEXT_PUBLIC_WA_NUMBER || "5511900000000";
-  const waMsg = process.env.NEXT_PUBLIC_WA_MESSAGE || "Olá!%20Quero%20saber%20mais%20sobre%20os%20kits.";
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
+  const waNumber = config.contato?.whatsapp ?? ''
+  const waMsg = "Olá!%20Quero%20saber%20mais%20sobre%20os%20produtos."
 
   return (
     <>
@@ -62,14 +66,16 @@ export function FinalCTA() {
               </svg>
               Ver os kits agora
             </Link>
-            <a
-              href={`https://wa.me/${waNumber}?text=${waMsg}`}
-              className="btn-ghost-lg"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Falar no WhatsApp →
-            </a>
+            {waNumber && (
+              <a
+                href={`https://wa.me/${waNumber}?text=${waMsg}`}
+                className="btn-ghost-lg"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Falar no WhatsApp →
+              </a>
+            )}
           </div>
         </div>
       </section>

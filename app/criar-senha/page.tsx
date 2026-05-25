@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useStore } from '@/contexts/StoreContext'
 
 export default function CriarSenhaPage() {
+  const config = useStore()
   const supabase = createSupabaseBrowserClient()
   const router = useRouter()
 
@@ -63,7 +65,7 @@ export default function CriarSenhaPage() {
       <style>{styles}</style>
       <div className="lp-bg">
         <div className="lp-card">
-          <Link href="/" className="lp-logo">TÁ.PRA.PESCA</Link>
+          <Link href="/" className="lp-logo">{config.nome}</Link>
 
           {checking ? (
             <div className="lp-loading">Verificando link…</div>

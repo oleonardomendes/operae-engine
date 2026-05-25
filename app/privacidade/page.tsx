@@ -1,13 +1,24 @@
 import type { Metadata } from 'next'
 import StoreHeader from '@/components/StoreHeader'
 import StoreFooter from '@/components/StoreFooter'
+import { resolveStoreId } from '@/lib/store-id'
+import { loadStoreConfig } from '@/lib/store-config'
 
-export const metadata: Metadata = {
-  title: 'Política de Privacidade — Tá Pra Pesca',
-  description: 'Política de privacidade e proteção de dados da Tá Pra Pesca (LGPD).',
+export function generateMetadata(): Metadata {
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
+  return {
+    title: `Política de Privacidade — ${config.nome}`,
+    description: `Política de privacidade e proteção de dados da ${config.nome} (LGPD).`,
+  }
 }
 
 export default function PrivacidadePage() {
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
+  const email = config.contato?.email ?? ''
+  const waNumber = config.contato?.whatsapp ?? ''
+
   return (
     <>
       <StoreHeader />
@@ -43,9 +54,11 @@ export default function PrivacidadePage() {
             Você pode a qualquer momento solicitar: acesso aos seus dados, correção de dados
             incorretos, exclusão dos seus dados ou revogação do consentimento. Para exercer
             esses direitos, entre em contato pelo e-mail:{' '}
-            <a href="mailto:contato@taprapesca.com.br" style={linkStyle}>
-              contato@taprapesca.com.br
-            </a>
+            {email && (
+              <a href={`mailto:${email}`} style={linkStyle}>
+                {email}
+              </a>
+            )}
           </p>
 
           <h2 style={h2}>Cookies</h2>
@@ -57,8 +70,8 @@ export default function PrivacidadePage() {
 
           <h2 style={h2}>Contato</h2>
           <ul style={ul}>
-            <li style={li}><strong>E-mail:</strong> contato@taprapesca.com.br</li>
-            <li style={li}><strong>WhatsApp:</strong> (15) 99617-7133</li>
+            {email && <li style={li}><strong>E-mail:</strong> {email}</li>}
+            {waNumber && <li style={li}><strong>WhatsApp:</strong> {waNumber}</li>}
           </ul>
 
           <p style={{ ...p, marginTop: '48px', fontSize: '13px', opacity: 0.6 }}>

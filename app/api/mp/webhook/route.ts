@@ -4,12 +4,16 @@ import { supabase } from '@/lib/supabase'
 import { blingFetch } from '@/lib/bling'
 import { melhorEnvioFetch, getShippingOrigin } from '@/lib/melhor-envio'
 import { getMPAccessToken } from '@/lib/mercado-pago'
+import { loadStoreConfig } from '@/lib/store-config'
 
 export const dynamic = 'force-dynamic'
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms))
 
 export async function POST(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const storeId = searchParams.get('store_id')
+
   const body = await req.json()
 
   const type = body?.type || body?.topic
@@ -21,10 +25,19 @@ export async function POST(req: Request) {
 
   console.log('[webhook] recebido:', JSON.stringify(body))
 
+  if (!storeId) {
+    console.error('[webhook] store_id ausente na URL. Configure notification_url com ?store_id=')
+    await supabase.from('operation_logs').insert({
+      tipo: 'webhook_erro',
+      descricao: 'store_id ausente na URL do webhook MP',
+      payload: { paymentId },
+    }).catch(() => {})
+    return NextResponse.json({ error: 'store_id não determinado' }, { status: 400 })
+  }
+
+  const config = loadStoreConfig(storeId)
+
   try {
-    // TODO: extrair storeId do external_reference quando multi-tenant estiver ativo
-    // O external_reference atual é um UUID de pedido sem prefixo de loja
-    const storeId = 'taprapesca'
     const accessToken = await getMPAccessToken(storeId)
     const client = new MercadoPagoConfig({ accessToken })
 
@@ -42,11 +55,13 @@ export async function POST(req: Request) {
 
     if (data.status !== 'approved') return NextResponse.json({ ok: true })
 
-    const externalRef = data.external_reference
+    const externalRef = data.external_reference ?? ''
+    // Formato novo: 'storeId:pedidoUuid' — extrai só o UUID
+    const pedidoUuid = externalRef.includes(':') ? externalRef.split(':').slice(1).join(':') : externalRef
 
     let pedidoId: string | null = null
 
-    if (externalRef) {
+    if (pedidoUuid) {
       const { data: updated, error } = await supabase
         .from('pedidos')
         .update({
@@ -54,7 +69,7 @@ export async function POST(req: Request) {
           mp_payment_id: String(paymentId),
           updated_at: new Date().toISOString(),
         })
-        .eq('id', externalRef)
+        .eq('id', pedidoUuid)
         .select()
         .single()
 
@@ -161,6 +176,7 @@ export async function POST(req: Request) {
           if (lista.length > 0) break
           try {
             const r = await blingFetch(
+              storeId,
               `/contatos?numeroDocumento=${cpfLimpo}&criterio=${criterio}&limite=5`
             )
             lista = r?.data || []
@@ -177,7 +193,7 @@ export async function POST(req: Request) {
           if (contato.situacao === 'E' || contato.situacao === 'I') {
             try {
               await delay(300)
-              await blingFetch(`/contatos/${contatoId}`, {
+              await blingFetch(storeId, `/contatos/${contatoId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -207,7 +223,7 @@ export async function POST(req: Request) {
             // Contato ativo — atualiza endereço
             try {
               await delay(300)
-              await blingFetch(`/contatos/${contatoId}`, {
+              await blingFetch(storeId, `/contatos/${contatoId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -240,7 +256,7 @@ export async function POST(req: Request) {
     if (!contatoId) {
       try {
         await delay(300)
-        const res = await blingFetch('/contatos', {
+        const res = await blingFetch(storeId, '/contatos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -271,7 +287,7 @@ export async function POST(req: Request) {
         // Cria sem CPF como último recurso
         try {
           await delay(300)
-          const res = await blingFetch('/contatos', {
+          const res = await blingFetch(storeId, '/contatos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -329,7 +345,7 @@ export async function POST(req: Request) {
       numeroPedidoCompra: String(paymentId),
       situacao: { id: 6 },
       contato: { id: contatoId },
-      observacoes: `Pedido via site taprapesca.com.br | MP: ${paymentId}`,
+      observacoes: `Pedido via site ${config.dominio} | MP: ${paymentId}`,
       transporte: {
         fretePorConta: 'D',
         frete: Number(pedidoCompleto.frete_valor) || 0,
@@ -365,7 +381,7 @@ export async function POST(req: Request) {
           })
         : [{
             id: 1,
-            descricao: 'Pedido Tá Pra Pesca',
+            descricao: `Pedido ${config.nome}`,
             quantidade: 1,
             valor: Math.max(0, Number(pedidoCompleto.total) - Number(pedidoCompleto.frete_valor || 0)),
             unidade: 'UN',
@@ -377,7 +393,7 @@ export async function POST(req: Request) {
     try {
       await delay(600)
       console.log('[webhook] criando pedido Bling...')
-      const blingRes = await blingFetch('/pedidos/vendas', {
+      const blingRes = await blingFetch(storeId, '/pedidos/vendas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(blingBody),
@@ -415,7 +431,6 @@ export async function POST(req: Request) {
       try {
         await delay(500)
 
-        // TODO: extrair meStoreId do external_reference quando multi-tenant estiver ativo
         const meStoreId = storeId
         const origin = await getShippingOrigin(meStoreId)
 
@@ -458,7 +473,7 @@ export async function POST(req: Request) {
             own_hand: false,
             tags: [{
               tag: pedidoCompleto.id,
-              url: `https://taprapesca.com.br/admin/pedidos/${pedidoCompleto.id}`,
+              url: `https://${config.dominio}/admin/pedidos/${pedidoCompleto.id}`,
             }],
           },
         }
@@ -481,7 +496,7 @@ export async function POST(req: Request) {
 
           if (blingPedidoId) {
             await delay(400)
-            await blingFetch(`/pedidos/vendas/${blingPedidoId}`, {
+            await blingFetch(storeId, `/pedidos/vendas/${blingPedidoId}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -526,9 +541,9 @@ export async function POST(req: Request) {
             .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
           await resend.emails.send({
-            from: 'Tá Pra Pesca <contato@taprapesca.com.br>',
+            from: config.resend.from,
             to: emailUsuario,
-            subject: 'Pedido confirmado — Tá Pra Pesca',
+            subject: `Pedido confirmado — ${config.nome}`,
             html: `
               <!DOCTYPE html>
               <html>
@@ -537,11 +552,11 @@ export async function POST(req: Request) {
                 <div style="max-width:560px;margin:0 auto;background:#fff;
                   border-radius:12px;overflow:hidden;border:1px solid #e0d8c8;">
                   <div style="background:#1a3a1a;padding:32px;text-align:center;">
-                    <h1 style="color:#fff;margin:0;font-size:22px;letter-spacing:.05em;">TÁ.PRA.PESCA</h1>
+                    <h1 style="color:#fff;margin:0;font-size:22px;letter-spacing:.05em;">${config.nome.toUpperCase()}</h1>
                   </div>
                   <div style="padding:40px 32px;">
                     <h2 style="color:#1a3a1a;margin:0 0 16px;font-size:20px;">
-                      Pedido confirmado! 🎣
+                      Pedido confirmado!
                     </h2>
                     <p style="color:#444;line-height:1.6;margin:0 0 24px;">
                       Olá, <strong>${nomeUsuario}</strong>!<br><br>
@@ -556,7 +571,7 @@ export async function POST(req: Request) {
                       <div style="font-size:20px;font-weight:700;color:#1a3a1a;">${total}</div>
                     </div>
                     <div style="text-align:center;">
-                      <a href="https://taprapesca.com.br/conta"
+                      <a href="https://${config.dominio}/conta"
                         style="background:#1a3a1a;color:#fff;padding:14px 32px;border-radius:50px;
                         text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
                         Acompanhar pedido →
@@ -565,7 +580,7 @@ export async function POST(req: Request) {
                   </div>
                   <div style="background:#f5f0e8;padding:20px 32px;text-align:center;">
                     <p style="color:#888;font-size:12px;margin:0;">
-                      Tá Pra Pesca · contato@taprapesca.com.br
+                      ${config.nome} · ${config.resend.from}
                     </p>
                   </div>
                 </div>

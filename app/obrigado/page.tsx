@@ -3,18 +3,27 @@ import Link from "next/link";
 import { PurchaseTracker } from "@/components/analytics/PurchaseTracker";
 import PurchaseEvent from "@/components/PurchaseEvent";
 import SalvarPedido from "@/components/SalvarPedido";
+import { resolveStoreId } from "@/lib/store-id";
+import { loadStoreConfig } from "@/lib/store-config";
 
-export const metadata: Metadata = {
-  title: "Pedido confirmado — Tá Pra Pesca",
-  description: "Seu pedido foi confirmado com sucesso!",
-  robots: { index: false, follow: false },
-};
+export function generateMetadata(): Metadata {
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
+  return {
+    title: `Pedido confirmado — ${config.nome}`,
+    description: "Seu pedido foi confirmado com sucesso!",
+    robots: { index: false, follow: false },
+  };
+}
 
 interface Props {
   searchParams: { payment_id?: string; id?: string; nome?: string; preco?: string }
 }
 
 export default function Obrigado({ searchParams }: Props) {
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
+  const waNumber = config.contato?.whatsapp ?? ''
   const paymentId = searchParams?.payment_id
   const id = searchParams?.id
   const nome = searchParams?.nome ? decodeURIComponent(searchParams.nome) : ''
@@ -46,14 +55,16 @@ export default function Obrigado({ searchParams }: Props) {
         </p>
         <p style={styles.tip}>
           Dúvidas? Fala com a gente no{" "}
-          <a
-            href={`https://wa.me/${process.env.NEXT_PUBLIC_WA_NUMBER || "5511900000000"}`}
-            style={styles.waLink}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            WhatsApp
-          </a>
+          {waNumber ? (
+            <a
+              href={`https://wa.me/${waNumber}`}
+              style={styles.waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              WhatsApp
+            </a>
+          ) : 'WhatsApp'}
           .
         </p>
         <Link href="/" style={styles.btn}>

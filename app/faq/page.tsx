@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import StoreHeader from '@/components/StoreHeader'
 import StoreFooter from '@/components/StoreFooter'
+import { useStore } from '@/contexts/StoreContext'
 
 const grupos = [
   {
@@ -83,6 +84,8 @@ const grupos = [
 ]
 
 export default function FaqPage() {
+  const config = useStore()
+  const waNumber = config.contato?.whatsapp ?? ''
   const [aberto, setAberto] = useState<string | null>(null)
 
   return (
@@ -143,13 +146,15 @@ export default function FaqPage() {
             <p style={{ ...pStyle, marginBottom: '20px' }}>
               Não encontrou o que procurava? Fale diretamente com a gente.
             </p>
-            <a
-              href="https://wa.me/5515996177133"
-              target="_blank" rel="noopener noreferrer"
-              style={btnWpp}
-            >
-              Falar no WhatsApp →
-            </a>
+            {waNumber && (
+              <a
+                href={`https://wa.me/${waNumber}`}
+                target="_blank" rel="noopener noreferrer"
+                style={btnWpp}
+              >
+                Falar no WhatsApp →
+              </a>
+            )}
           </div>
         </div>
       </main>

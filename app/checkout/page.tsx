@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import nextDynamic from 'next/dynamic'
 import { dimensoesProdutos, dimensoesPadrao } from '@/data/dimensoes'
 import StoreHeader from '@/components/StoreHeader'
+import { useStore } from '@/contexts/StoreContext'
 
 const CheckoutForm = nextDynamic(
   () => import('@/components/CheckoutForm'),
@@ -12,6 +13,7 @@ const CheckoutForm = nextDynamic(
 )
 
 function CheckoutContent() {
+  const config = useStore()
   const searchParams = useSearchParams()
 
   const id = searchParams.get('id') || ''
@@ -29,6 +31,8 @@ function CheckoutContent() {
     </div>
   )
 
+  const baseUrl = `https://${config.dominio}`
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cream)', padding: '40px 5%' }}>
       <a href="/" style={{ color: 'var(--muted)', fontSize: '14px', fontWeight: '500',
@@ -40,9 +44,9 @@ function CheckoutContent() {
           kitNome={nome}
           kitPreco={preco}
           backUrls={{
-            success: `https://taprapesca.com.br/obrigado?id=${id}&nome=${encodeURIComponent(nome)}&preco=${preco}`,
-            failure: 'https://taprapesca.com.br',
-            pending: `https://taprapesca.com.br/obrigado?id=${id}&nome=${encodeURIComponent(nome)}&preco=${preco}`,
+            success: `${baseUrl}/obrigado?id=${id}&nome=${encodeURIComponent(nome)}&preco=${preco}`,
+            failure: baseUrl,
+            pending: `${baseUrl}/obrigado?id=${id}&nome=${encodeURIComponent(nome)}&preco=${preco}`,
           }}
           produtosParaFrete={[{ id, codigo, nome, valor: preco, quantidade: 1, ...dimensoes }]}
           onEnderecoComplete={(dados) => {

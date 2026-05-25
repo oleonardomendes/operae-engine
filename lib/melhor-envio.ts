@@ -132,7 +132,7 @@ export async function calcularFrete(
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'User-Agent': 'TaPraPesca (contato@taprapesca.com.br)',
+      'User-Agent': 'operae-engine',
     },
     body: JSON.stringify(body),
   })
@@ -170,7 +170,7 @@ export async function melhorEnvioFetch(
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      'User-Agent': 'TaPraPesca (contato@taprapesca.com.br)',
+      'User-Agent': 'operae-engine',
       ...(options?.headers ?? {}),
     },
   })

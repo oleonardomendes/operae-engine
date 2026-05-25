@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
 
   const clientId = process.env.MELHOR_ENVIO_CLIENT_ID!
   const clientSecret = process.env.MELHOR_ENVIO_CLIENT_SECRET!
-  const redirectUri = 'https://taprapesca.com.br/api/melhor-envio/callback'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  const redirectUri = `${appUrl}/api/melhor-envio/callback`
   const tokenUrl = 'https://www.melhorenvio.com.br/oauth/token'
 
   console.log('[ME callback] usando:', {
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest) {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json',
         'Authorization': `Basic ${basicAuth}`,
-        'User-Agent': 'TaPraPesca (contato@taprapesca.com.br)',
+        'User-Agent': 'operae-engine',
       },
       body: bodyParams.toString(),
     })

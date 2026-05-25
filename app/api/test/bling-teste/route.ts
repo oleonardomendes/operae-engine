@@ -1,8 +1,25 @@
 import { blingFetch } from '@/lib/bling'
 import { supabase } from '@/lib/supabase'
+import { NextResponse } from 'next/server'
+import { createAuthClient } from '@/lib/supabase-server'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: Request) {
+  const supabaseAuth = createAuthClient()
+  const { data: { user } } = await supabaseAuth.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+  }
+
+  const storeId = user.user_metadata?.store_id
+  if (!storeId) {
+    return NextResponse.json(
+      { error: 'store_id não encontrado no usuário. Configure o onboarding.' },
+      { status: 400 }
+    )
+  }
+
   const { searchParams } = new URL(req.url)
   const codigo = searchParams.get('codigo') || '81102'
   const nome = searchParams.get('nome') || 'Vara de Pesca Enjoylure'
@@ -15,7 +32,7 @@ export async function GET(req: Request) {
   try {
     // 1. Busca produto no Bling pelo código SKU
     await delay(300)
-    const produtoRes = await blingFetch(`/produtos?codigo=${codigo}&limite=1`)
+    const produtoRes = await blingFetch(storeId, `/produtos?codigo=${codigo}&limite=1`)
     const produtoBling = produtoRes?.data?.[0]
     const produtoId = produtoBling?.id || null
     console.log('[teste-bling] produto encontrado:', produtoId, produtoBling?.nome)
@@ -29,8 +46,8 @@ export async function GET(req: Request) {
     try {
       await delay(300)
       const [buscaFormatado, buscaSemFormato] = await Promise.allSettled([
-        blingFetch(`/contatos?pesquisa=${encodeURIComponent(cpfTesteFormatado)}&limite=10`),
-        blingFetch(`/contatos?pesquisa=${cpfTeste}&limite=10`),
+        blingFetch(storeId, `/contatos?pesquisa=${encodeURIComponent(cpfTesteFormatado)}&limite=10`),
+        blingFetch(storeId, `/contatos?pesquisa=${cpfTeste}&limite=10`),
       ])
 
       const resultados = [
@@ -54,7 +71,7 @@ export async function GET(req: Request) {
     if (!contatoId) {
       try {
         await delay(300)
-        const contato = await blingFetch('/contatos', {
+        const contato = await blingFetch(storeId, '/contatos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -86,7 +103,7 @@ export async function GET(req: Request) {
     if (contatoId) {
       try {
         await delay(300)
-        const putRes = await blingFetch(`/contatos/${contatoId}`, {
+        const putRes = await blingFetch(storeId, `/contatos/${contatoId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -115,14 +132,14 @@ export async function GET(req: Request) {
 
     // 4. Cria pedido com produto real
     await delay(500)
-    const pedido = await blingFetch('/pedidos/vendas', {
+    const pedido = await blingFetch(storeId, '/pedidos/vendas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         data: hoje,
         situacao: { id: 6 },
         contato: { id: contatoId },
-        observacoes: `TESTE — ${new Date().toISOString()} — Pedido via site taprapesca.com.br`,
+        observacoes: `TESTE — ${new Date().toISOString()} — Pedido de teste`,
         transporte: {
           fretePorConta: 'D',
           frete: frete,

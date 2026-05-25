@@ -8,6 +8,7 @@ import nextDynamic from 'next/dynamic'
 import { dimensoesProdutos, dimensoesPadrao } from '@/data/dimensoes'
 import StoreHeader from '@/components/StoreHeader'
 import Link from 'next/link'
+import { useStore } from '@/contexts/StoreContext'
 
 const CheckoutForm = nextDynamic(
   () => import('@/components/CheckoutForm'),
@@ -15,6 +16,7 @@ const CheckoutForm = nextDynamic(
 )
 
 export default function CartCheckoutPage() {
+  const config = useStore()
   const { items, totalPreco } = useCart()
   const router = useRouter()
 
@@ -51,9 +53,9 @@ export default function CartCheckoutPage() {
             }
             kitPreco={totalPreco}
             backUrls={{
-              success: 'https://taprapesca.com.br/obrigado',
-              failure: 'https://taprapesca.com.br',
-              pending: 'https://taprapesca.com.br/obrigado',
+              success: `https://${config.dominio}/obrigado`,
+              failure: `https://${config.dominio}`,
+              pending: `https://${config.dominio}/obrigado`,
             }}
             produtosParaFrete={items.map(i => {
               const codigo = String(i.id)

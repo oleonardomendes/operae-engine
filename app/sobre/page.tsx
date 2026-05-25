@@ -2,13 +2,23 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import StoreHeader from '@/components/StoreHeader'
 import StoreFooter from '@/components/StoreFooter'
+import { resolveStoreId } from '@/lib/store-id'
+import { loadStoreConfig } from '@/lib/store-config'
 
-export const metadata: Metadata = {
-  title: 'Quem Somos — Tá Pra Pesca',
-  description: 'Conheça a Tá Pra Pesca, loja online de equipamentos de pesca de Iperó, SP.',
+export function generateMetadata(): Metadata {
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
+  return {
+    title: `Quem Somos — ${config.nome}`,
+    description: `Conheça a ${config.nome}.`,
+  }
 }
 
 export default function SobrePage() {
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
+  const waNumber = config.contato?.whatsapp ?? ''
+
   return (
     <>
       <StoreHeader />
@@ -17,7 +27,7 @@ export default function SobrePage() {
           <h1 style={h1}>Quem Somos</h1>
 
           <p style={p}>
-            A Tá Pra Pesca nasceu da paixão pela pesca e da vontade de tornar esse
+            A {config.nome} nasceu da paixão pela pesca e da vontade de tornar esse
             esporte mais acessível para todo mundo — do iniciante que está montando
             seu primeiro equipamento ao pescador experiente que sabe exatamente o que precisa.
           </p>
@@ -43,13 +53,15 @@ export default function SobrePage() {
               Tem dúvida sobre qual equipamento escolher? Nos chame pelo WhatsApp —
               respondemos rápido.
             </p>
-            <a
-              href="https://wa.me/5515996177133"
-              target="_blank" rel="noopener noreferrer"
-              style={btnWpp}
-            >
-              Falar no WhatsApp →
-            </a>
+            {waNumber && (
+              <a
+                href={`https://wa.me/${waNumber}`}
+                target="_blank" rel="noopener noreferrer"
+                style={btnWpp}
+              >
+                Falar no WhatsApp →
+              </a>
+            )}
           </div>
         </div>
       </main>

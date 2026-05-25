@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import nextDynamic from 'next/dynamic'
 import { kits } from '@/data/kits'
 import StoreHeader from '@/components/StoreHeader'
+import { useStore } from '@/contexts/StoreContext'
 
 const CheckoutForm = nextDynamic(
   () => import('@/components/CheckoutForm'),
@@ -12,6 +13,7 @@ const CheckoutForm = nextDynamic(
 )
 
 function CheckoutContent() {
+  const config = useStore()
   const searchParams = useSearchParams()
 
   const kitId = Number(searchParams.get('kit'))
@@ -48,9 +50,9 @@ function CheckoutContent() {
           kitItens={kit.items}
           kitBonus={kit.bonus}
           backUrls={{
-            success: `https://taprapesca.com.br/kits/obrigado?kit=${kit.id}`,
-            failure: 'https://taprapesca.com.br/kits',
-            pending: `https://taprapesca.com.br/kits/obrigado?kit=${kit.id}`,
+            success: `https://${config.dominio}/kits/obrigado?kit=${kit.id}`,
+            failure: `https://${config.dominio}/kits`,
+            pending: `https://${config.dominio}/kits/obrigado?kit=${kit.id}`,
           }}
           produtosParaFrete={[{
             id: String(kit.id),

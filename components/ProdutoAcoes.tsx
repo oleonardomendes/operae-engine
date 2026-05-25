@@ -3,8 +3,7 @@
 import Link from 'next/link'
 import { useCart } from '@/contexts/CartContext'
 import { trackAddToCart } from '@/lib/analytics'
-
-const WA = process.env.NEXT_PUBLIC_WA_NUMBER || '5511900000000'
+import { useStore } from '@/contexts/StoreContext'
 
 interface Props {
   id: number
@@ -15,9 +14,11 @@ interface Props {
 }
 
 export default function ProdutoAcoes({ id, nome, preco, imagemURL, codigo }: Props) {
+  const config = useStore()
   const { addItem } = useCart()
 
-  const waHref = `https://wa.me/${WA}?text=${encodeURIComponent(`Olá! Tenho interesse: ${nome}`)}`
+  const waNumber = config.contato?.whatsapp ?? ''
+  const waHref = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(`Olá! Tenho interesse: ${nome}`)}` : '#'
   const checkoutHref = `/checkout?id=${id}&codigo=${encodeURIComponent(codigo)}&nome=${encodeURIComponent(nome)}&preco=${preco}`
 
   return (

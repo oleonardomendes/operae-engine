@@ -2,8 +2,10 @@
 
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
+import { useStore } from '@/contexts/StoreContext'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const config = useStore()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -23,7 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="al-root">
         <nav className="al-nav">
           <span className="al-brand">
-            TÁ<span>.</span>PRA<span>.</span>PESCA
+            {config.nome}
             <span className="al-brand-tag">· Admin</span>
           </span>
 

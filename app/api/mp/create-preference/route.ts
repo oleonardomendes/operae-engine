@@ -1,11 +1,28 @@
 import { MercadoPagoConfig, Preference } from 'mercadopago'
 import { NextResponse } from 'next/server'
 import { getMPAccessToken } from '@/lib/mercado-pago'
+import { loadStoreConfig } from '@/lib/store-config'
+import { createAuthClient } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request) {
   try {
+    const supabase = createAuthClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+    }
+
+    const storeId = user.user_metadata?.store_id
+    if (!storeId) {
+      return NextResponse.json(
+        { error: 'store_id não encontrado no usuário. Configure o onboarding.' },
+        { status: 400 }
+      )
+    }
+
     const { kitId, kitNome, kitPreco, backUrls, items: cartItems, freteValor = 0, freteServico = 'Frete' } = await req.json()
 
     const mpItems = cartItems
@@ -25,32 +42,33 @@ export async function POST(req: Request) {
           currency_id: 'BRL',
         }]
 
-    // TODO: extrair storeId do contexto do usuário autenticado quando multi-tenant estiver ativo
-    const storeId = 'taprapesca'
     const accessToken = await getMPAccessToken(storeId)
     const client = new MercadoPagoConfig({ accessToken })
+    const config = loadStoreConfig(storeId)
 
-    const userId = req.headers.get('x-user-id') || null
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
     const pedidoId = crypto.randomUUID()
 
     console.log('[preference] pedidoId gerado:', pedidoId)
-    console.log('[preference] external_reference no body:', { external_reference: pedidoId })
+    console.log('[preference] external_reference no body:', { external_reference: `${storeId}:${pedidoId}` })
 
     const preference = new Preference(client)
     const result = await preference.create({
       body: {
         items: mpItems,
-        external_reference: pedidoId,
+        external_reference: `${storeId}:${pedidoId}`,
         metadata: {
-          user_id: userId,
+          store_id: storeId,
+          user_id: user.id,
           frete_valor: freteValor,
           frete_servico: freteServico || null,
         },
         back_urls: backUrls ?? {
-          success: 'https://taprapesca.com.br/obrigado?status=approved',
-          failure: 'https://taprapesca.com.br/checkout?erro=pagamento',
-          pending: 'https://taprapesca.com.br/obrigado?status=pending',
+          success: `${appUrl}/obrigado?status=approved`,
+          failure: `${appUrl}/checkout?erro=pagamento`,
+          pending: `${appUrl}/obrigado?status=pending`,
         },
+        notification_url: `${appUrl}/api/mp/webhook?store_id=${storeId}`,
         payment_methods: {
           excluded_payment_types: [
             { id: 'ticket' },
@@ -61,7 +79,7 @@ export async function POST(req: Request) {
           default_installments: 1,
         },
         auto_return: 'approved',
-        statement_descriptor: 'TA PRA PESCA',
+        statement_descriptor: config.nome.toUpperCase().slice(0, 22),
       }
     })
 

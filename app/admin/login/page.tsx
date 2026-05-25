@@ -4,8 +4,10 @@ export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useStore } from '@/contexts/StoreContext'
 
 export default function AdminLoginPage() {
+  const config = useStore()
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -46,7 +48,7 @@ export default function AdminLoginPage() {
       <div className="al-root">
         <div className="al-card">
           <div className="al-logo">
-            TÁ<span>.</span>PRA<span>.</span>PESCA
+            {config.nome}
           </div>
           <p className="al-sub">Área restrita — administração</p>
 
@@ -59,7 +61,7 @@ export default function AdminLoginPage() {
                 className="al-input"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="admin@taprapesca.com.br"
+                placeholder={`admin@${config.dominio}`}
                 required
                 autoComplete="email"
                 autoFocus

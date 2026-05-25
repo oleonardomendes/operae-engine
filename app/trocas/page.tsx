@@ -1,13 +1,24 @@
 import type { Metadata } from 'next'
 import StoreHeader from '@/components/StoreHeader'
 import StoreFooter from '@/components/StoreFooter'
+import { resolveStoreId } from '@/lib/store-id'
+import { loadStoreConfig } from '@/lib/store-config'
 
-export const metadata: Metadata = {
-  title: 'Trocas e Devoluções — Tá Pra Pesca',
-  description: 'Política de trocas e devoluções da Tá Pra Pesca.',
+export function generateMetadata(): Metadata {
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
+  return {
+    title: `Trocas e Devoluções — ${config.nome}`,
+    description: `Política de trocas e devoluções da ${config.nome}.`,
+  }
 }
 
 export default function TrocasPage() {
+  const storeId = resolveStoreId()
+  const config = loadStoreConfig(storeId)
+  const waNumber = config.contato?.whatsapp ?? ''
+  const email = config.contato?.email ?? ''
+
   return (
     <>
       <StoreHeader />
@@ -41,8 +52,8 @@ export default function TrocasPage() {
 
           <h2 style={h2}>Como solicitar</h2>
           <ul style={ul}>
-            <li style={li}><strong>WhatsApp:</strong> (15) 99617-7133</li>
-            <li style={li}><strong>E-mail:</strong> contato@taprapesca.com.br</li>
+            {waNumber && <li style={li}><strong>WhatsApp:</strong> {waNumber}</li>}
+            {email && <li style={li}><strong>E-mail:</strong> {email}</li>}
             <li style={li}><strong>Horário de atendimento:</strong> Segunda a sexta, das 9h às 18h</li>
             <li style={li}>Respondemos em até 1 dia útil.</li>
           </ul>
@@ -53,19 +64,21 @@ export default function TrocasPage() {
             no mesmo método de pagamento utilizado na compra.
           </p>
 
-          <div style={{ marginTop: '40px', padding: '28px', background: '#fff',
-            border: '1px solid var(--border)', borderRadius: 'var(--r-lg)' }}>
-            <p style={{ ...p, marginBottom: '20px' }}>
-              Tem dúvida ou precisa iniciar uma troca? Fale diretamente com a gente.
-            </p>
-            <a
-              href="https://wa.me/5515996177133"
-              target="_blank" rel="noopener noreferrer"
-              style={btnWpp}
-            >
-              Falar no WhatsApp →
-            </a>
-          </div>
+          {waNumber && (
+            <div style={{ marginTop: '40px', padding: '28px', background: '#fff',
+              border: '1px solid var(--border)', borderRadius: 'var(--r-lg)' }}>
+              <p style={{ ...p, marginBottom: '20px' }}>
+                Tem dúvida ou precisa iniciar uma troca? Fale diretamente com a gente.
+              </p>
+              <a
+                href={`https://wa.me/${waNumber}`}
+                target="_blank" rel="noopener noreferrer"
+                style={btnWpp}
+              >
+                Falar no WhatsApp →
+              </a>
+            </div>
+          )}
         </div>
       </main>
       <StoreFooter />
