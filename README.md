@@ -1,176 +1,158 @@
-# 🎣 Tá Pra Pesca — Landing Page
+# Operaê Engine
 
-Landing page de vendas diretas com Next.js 14, deployada na Vercel, integrada com Yampi (checkout), Bling (ERP) e GTM (tagueamento).
+> Motor de e-commerce operacional brasileiro — modular, integrável e pronto para produção.
+
+---
+
+## O que é
+
+O Operaê Engine é o núcleo técnico do [Operaê](https://operae.com.br): uma engine de e-commerce construída para o mercado brasileiro, com todas as integrações que lojistas realmente precisam funcionando desde o primeiro dia.
+
+Este repositório é o laboratório de modularização da engine. O objetivo é extrair cada integração do projeto original (Tá Pra Pesca) em módulos independentes, reutilizáveis e configuráveis por loja — sem reescrever o que já funciona em produção.
+
+---
+
+## Contexto
+
+O Tá Pra Pesca (`taprapesca.com.br`) é a prova de conceito viva da engine. Tudo que está neste repositório foi extraído de um sistema funcionando em produção, com pedidos reais, pagamentos reais e logística automatizada.
+
+A modularização transforma esse sistema específico em um template genérico que pode ser implantado para qualquer lojista em horas.
+
+---
+
+## Módulos
+
+| Módulo | Responsabilidade | Status |
+|---|---|---|
+| `store-config` | Configuração por loja (credenciais, tema, margens) | 🔄 Em extração |
+| `bling` | Sincronização bidirecional com ERP Bling | 🔄 Em extração |
+| `checkout` | PIX nativo + Mercado Pago + cálculo de frete | 🔄 Em extração |
+| `shipping` | Melhor Envio — carrinho, rastreio, NF-e | 🔄 Em extração |
+| `storefront` | Catálogo, PDP, landing pages, painel admin | 🔄 Em extração |
+| `analytics` | GTM, Meta Pixel, GA4, TikTok Pixel, Google Ads | 🔄 Em extração |
 
 ---
 
 ## Stack
 
-| Camada | Ferramenta |
-|---|---|
-| Framework | Next.js 14 (App Router) |
-| Hosting | Vercel |
-| Repositório | GitHub |
-| Checkout | Yampi |
-| ERP / NF-e | Bling |
-| Tag Manager | Google Tag Manager |
-| Analytics | GA4 (via GTM) |
-| Ads | Meta Pixel + Google Ads (via GTM) |
+- **Framework:** Next.js 15 + React 19 + TypeScript
+- **Banco de dados:** Supabase (Postgres + Auth + Realtime)
+- **Deploy:** Vercel + Cloudflare CDN
+- **ERP:** Bling (OAuth 2.0, sync bidirecional)
+- **Pagamento:** Mercado Pago (PIX nativo + Checkout Pro)
+- **Frete:** Melhor Envio (cálculo real + carrinho automatizado)
+- **Email:** Resend
+- **UI:** Tailwind CSS + shadcn/ui
 
 ---
 
-## Rodando localmente
+## Como funciona a configuração por loja
 
-```bash
-# 1. Clone o repositório
-git clone https://github.com/SEU_USUARIO/ta-pra-pesca.git
-cd ta-pra-pesca
+Cada loja tem seu próprio `store-config.json` em `store-configs/<store-id>/`. O código nunca lê variáveis de ambiente diretamente — sempre lê via `loadStoreConfig()`.
 
-# 2. Instale as dependências
-npm install
-
-# 3. Configure as variáveis de ambiente
-cp .env.local.example .env.local
-# Edite o .env.local com os valores reais
-
-# 4. Rode o servidor de desenvolvimento
-npm run dev
-# Acesse: http://localhost:3000
+```
+store-configs/
+├── taprapesca/
+│   ├── store-config.json    ← configurações da loja
+│   └── .env.local           ← secrets (nunca commitado)
+└── _template/
+    └── store-config.json    ← base para novo cliente
 ```
 
----
-
-## Variáveis de ambiente
-
-Copie `.env.local.example` para `.env.local` e preencha:
-
-| Variável | Descrição |
-|---|---|
-| `NEXT_PUBLIC_WA_NUMBER` | Número do WhatsApp (55 + DDD + número) |
-| `NEXT_PUBLIC_WA_MESSAGE` | Mensagem padrão do WhatsApp (URL encoded) |
-| `NEXT_PUBLIC_KIT1_URL` | Link de checkout Yampi — Kit Rio & Tilápia |
-| `NEXT_PUBLIC_KIT2_URL` | Link de checkout Yampi — Kit Pesqueiro Completo |
-| `NEXT_PUBLIC_KIT3_URL` | Link de checkout Yampi — Kit Carretilha Expert |
-| `NEXT_PUBLIC_GTM_ID` | ID do Google Tag Manager (ex: GTM-XXXXXXX) |
-
-> **No Vercel:** adicione essas variáveis em Project → Settings → Environment Variables.
-> O GTM só é injetado quando `NEXT_PUBLIC_GTM_ID` estiver preenchido (Fase 3).
-
----
-
-## Deploy no Vercel
+Para rodar localmente apontando para uma loja específica:
 
 ```bash
-# 1. Faça push pro GitHub
-git add .
-git commit -m "feat: setup inicial da landing page"
-git push origin main
-
-# 2. No Vercel:
-# - Vá em vercel.com → New Project
-# - Importe o repositório do GitHub
-# - O Vercel detecta Next.js automaticamente
-# - Adicione as variáveis de ambiente
-# - Clique em Deploy
+STORE_ID=taprapesca npm run dev
 ```
-
-Após o primeiro deploy, cada `git push` na branch `main` faz deploy automático.
 
 ---
 
 ## Estrutura do projeto
 
 ```
-ta-pra-pesca/
-├── app/
-│   ├── layout.tsx          # Root layout — metadata + GTM
-│   ├── page.tsx            # Landing page principal
-│   ├── globals.css         # Design system (tokens, reset, utilitários)
-│   └── obrigado/
-│       └── page.tsx        # Thank you page (rastreio de conversão)
-├── components/
-│   ├── Navbar.tsx          # Navbar fixa com efeito scroll
-│   ├── Hero.tsx            # Seção hero
-│   ├── TrustBar.tsx        # Barra de selos de confiança
-│   ├── Kits.tsx            # Cards dos 3 kits
-│   ├── HowItWorks.tsx      # Seção "3 passos"
-│   ├── Diferenciais.tsx    # Seção "Por que a gente"
-│   ├── FAQ.tsx             # Accordion de perguntas frequentes
-│   ├── FinalCTA.tsx        # Seção de call-to-action final
-│   ├── Footer.tsx          # Rodapé
-│   ├── WhatsAppFloat.tsx   # Botão WhatsApp flutuante
-│   └── GTM.tsx             # Google Tag Manager (ativo na Fase 3)
-├── data/
-│   └── kits.ts             # ← EDITE AQUI para atualizar os kits
-├── .env.local.example      # Modelo de variáveis de ambiente
-├── .gitignore
-├── next.config.ts
-├── package.json
-├── tsconfig.json
-└── README.md
+operae-engine/
+├── store-configs/          ← configuração por cliente
+├── src/
+│   ├── modules/            ← módulos extraídos (bling, checkout, shipping...)
+│   ├── lib/                ← utilitários compartilhados
+│   │   ├── store-config.ts ← loader de configuração
+│   │   ├── supabase.ts
+│   │   └── constants.ts
+│   └── app/                ← rotas Next.js
+├── scripts/
+│   ├── validate-config.ts  ← valida store-config antes de implantar
+│   └── test-module.ts      ← testa módulo isolado sem Next.js
+└── package.json
 ```
 
 ---
 
-## Atualizando os kits
-
-Edite **`data/kits.ts`** — é o único arquivo que precisa mudar quando:
-
-- Preços mudarem
-- Brindes dos kits 1 e 3 forem definidos
-- Links de checkout do Yampi forem gerados
-- Itens dos kits mudarem
-
----
-
-## Roadmap de integração
-
-### ✅ Fase 1 — Infraestrutura (concluída)
-- [x] Projeto Next.js estruturado
-- [x] GitHub + Vercel configurados
-- [ ] Domínio personalizado (configurar no Vercel quando comprar o domínio)
-
-### 🔄 Fase 2 — Checkout (próxima)
-1. Criar conta no [Yampi](https://www.yampi.com.br)
-2. Cadastrar os 3 kits como produtos
-3. Gerar os links de checkout de cada kit
-4. Preencher `NEXT_PUBLIC_KIT1_URL`, `NEXT_PUBLIC_KIT2_URL`, `NEXT_PUBLIC_KIT3_URL` no `.env.local` e no Vercel
-
-### 📊 Fase 3 — Tagueamento
-1. Criar conta no [Google Tag Manager](https://tagmanager.google.com)
-2. Preencher `NEXT_PUBLIC_GTM_ID` → o script GTM é injetado automaticamente
-3. Dentro do GTM: configurar GA4, Meta Pixel, Google Ads Conversion Tag
-4. Mapear eventos: `page_view` → `view_item` → `begin_checkout` → `purchase`
-
-### 🔗 Fase 4 — Bling
-1. Criar conta no [Bling](https://www.bling.com.br)
-2. Cadastrar os produtos com os mesmos SKUs do Yampi
-3. Ativar integração nativa Yampi → Bling no painel do Yampi
-4. Configurar emissão automática de NF-e no Bling
-
-### 📈 Fase 5 — Otimização
-- [ ] Microsoft Clarity (heatmaps grátis — instala via GTM)
-- [ ] Looker Studio conectando GA4 + Bling para dashboard unificado
-- [ ] Testes A/B de headlines
-
----
-
-## Comandos úteis
+## Rodando localmente
 
 ```bash
-npm run dev      # Servidor de desenvolvimento
-npm run build    # Build de produção (teste local antes do deploy)
-npm run start    # Roda o build localmente
-npm run lint     # Verifica erros de TypeScript/ESLint
+# Instalar dependências
+npm install
+
+# Configurar variáveis de ambiente
+cp store-configs/_template/.env.example store-configs/taprapesca/.env.local
+# Preencher os valores no .env.local
+
+# Rodar em desenvolvimento
+STORE_ID=taprapesca npm run dev
 ```
 
 ---
 
-## Pendências (Lucas)
+## Validando um módulo isolado
 
-- [ ] Definir brinde do Kit 1 (Rio & Tilápia) e atualizar `data/kits.ts`
-- [ ] Definir brinde do Kit 3 (Carretilha Expert) e atualizar `data/kits.ts`
-- [ ] Comprar domínio próprio (sugestão: `taprapesca.com.br`)
-- [ ] Criar conta Yampi e gerar links de checkout
-- [ ] Preencher número do WhatsApp no `.env.local` e no Vercel
-- [ ] Adicionar fotos dos produtos na pasta `/public` (quando disponíveis)
+```bash
+# Testa o módulo Bling sem precisar subir o Next.js
+npx tsx scripts/test-module.ts -- bling taprapesca
+
+# Valida o store-config de um cliente antes de implantar
+npx tsx scripts/validate-config.ts -- taprapesca
+```
+
+---
+
+## Critério de sucesso da modularização
+
+> Consigo criar `store-configs/novo-cliente/store-config.json`, rodar `STORE_ID=novo-cliente npm run dev` e a loja abre com nome, cores e integrações do novo cliente — sem alterar uma linha de código.
+
+Se qualquer módulo ainda lê `process.env.BLING_*`, `process.env.MP_*` ou `process.env.ME_*` diretamente, a extração não está completa.
+
+---
+
+## Ecossistema Operaê
+
+| Produto | Repositório | Status |
+|---|---|---|
+| **Operaê Engine** | `operae-engine` (este repo) | Em modularização |
+| **Guiamos** | `listify` | Em produção — [guiamos.com.br](https://guiamos.com.br) |
+| **Tá Pra Pesca** | `ta-pra-pesca` | Em produção — prova de conceito da engine |
+
+---
+
+## Roadmap
+
+- [ ] Extrair `store-config.json` e loader tipado
+- [ ] Adicionar `store_id` em todas as tabelas Supabase
+- [ ] Extrair módulo `bling`
+- [ ] Extrair módulo `checkout`
+- [ ] Extrair módulo `shipping`
+- [ ] Extrair módulo `storefront`
+- [ ] Extrair módulo `analytics`
+- [ ] Criar `scripts/validate-config.ts`
+- [ ] Implantar segundo cliente (segmento diferente de pesca)
+- [ ] Multi-tenant: subdomínio por loja (`cliente.operae.com.br`)
+
+---
+
+## Time
+
+**Léo Mendes** — Tech Lead  
+**Lucas Carvalho** — Business Lead
+
+---
+
+*Operaê • Maio 2026*
