@@ -13,19 +13,15 @@
 
   "bling": {
     "client_id": "env:BLING_CLIENT_ID",
-    "client_secret": "env:BLING_CLIENT_SECRET",
-    "access_token": "env:BLING_ACCESS_TOKEN",
-    "refresh_token": "env:BLING_REFRESH_TOKEN"
+    "client_secret": "env:BLING_CLIENT_SECRET"
   },
 
   "mercado_pago": {
-    "access_token": "env:MP_ACCESS_TOKEN",
     "public_key": "env:MP_PUBLIC_KEY",
     "webhook_secret": "env:MP_WEBHOOK_SECRET"
   },
 
   "melhor_envio": {
-    "token": "env:ME_TOKEN",
     "sandbox": false,
     "from_nome": "",
     "from_cep": "",

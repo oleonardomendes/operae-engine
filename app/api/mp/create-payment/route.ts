@@ -1,18 +1,18 @@
 import { MercadoPagoConfig, Payment } from 'mercadopago'
 import { NextResponse } from 'next/server'
+import { getMPAccessToken } from '@/lib/mercado-pago'
 
 export const dynamic = 'force-dynamic'
-
-const client = new MercadoPagoConfig({
-  accessToken: process.env.NEXT_PUBLIC_MP_ENV === 'test'
-    ? process.env.MP_ACCESS_TOKEN_TEST!
-    : process.env.MP_ACCESS_TOKEN!,
-})
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
     const { formData, amount, description, pedidoId } = body
+
+    // TODO: extrair storeId do contexto do usuário autenticado quando multi-tenant estiver ativo
+    const storeId = 'taprapesca'
+    const accessToken = await getMPAccessToken(storeId)
+    const client = new MercadoPagoConfig({ accessToken })
 
     const payment = new Payment(client)
     const result = await payment.create({

@@ -1,3 +1,6 @@
+// LEGADO: /api/bling/callback — recebe callback OAuth e salva em bling_tokens
+// Substituído por /api/oauth/bling/callback (salva em store_integrations com store_id)
+// Manter funcionando até confirmar que o fluxo novo está em produção
 import { NextRequest, NextResponse } from "next/server";
 import { saveTokensToSupabase } from "@/lib/bling";
 

@@ -1,37 +1,111 @@
-import { supabase } from './supabase'
+import { getIntegrationToken } from './integrations'
+import { loadStoreConfig } from './store-config'
+import { createServiceClient } from './supabase-server'
 
-const BASE_URL = process.env.MELHOR_ENVIO_BASE_URL ||
-  'https://melhorenvio.com.br/api/v2'
+const ME_BASE_URL = process.env.NODE_ENV === 'development' && process.env.ME_SANDBOX_URL
+  ? process.env.ME_SANDBOX_URL
+  : 'https://melhorenvio.com.br/api/v2'
 
-async function getMEToken(): Promise<string> {
-  const { data } = await supabase
-    .from('melhor_envio_tokens')
-    .select('access_token, expires_at')
-    .eq('id', 1)
-    .single()
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 
-  if (!data?.access_token) throw new Error('Token Melhor Envio não configurado')
-  return data.access_token
+export interface ShippingOrigin {
+  nome: string
+  phone?: string
+  cep: string
+  rua: string
+  numero: string
+  bairro: string
+  cidade: string
+  uf: string
 }
 
-export async function calcularFrete(params: {
-  cepDestino: string
-  produtos: Array<{
-    id: string
-    nome: string
-    peso: number
-    altura: number
-    largura: number
-    comprimento: number
-    valor: number
-    quantidade: number
-  }>
-}) {
-  const token = await getMEToken()
-  const originCep = process.env.MELHOR_ENVIO_ORIGIN_CEP!
+// ─── Helpers internos ─────────────────────────────────────────────────────────
+
+async function getMEToken(storeId: string): Promise<string> {
+  try {
+    return await getIntegrationToken(storeId, 'melhor_envio')
+  } catch (err) {
+    throw new Error(
+      `[melhor-envio] Token expirado para loja '${storeId}'. Reconecte em /painel/integracoes` +
+      ` — ${err instanceof Error ? err.message : String(err)}`
+    )
+  }
+}
+
+// ─── Origem do envio ──────────────────────────────────────────────────────────
+
+export async function getShippingOrigin(storeId: string): Promise<ShippingOrigin> {
+  // Prioridade 1: tabela stores no Supabase
+  try {
+    const sb = createServiceClient()
+    const { data, error } = await sb
+      .from('stores')
+      .select('shipping_from_cep, shipping_from_nome, shipping_from_rua, shipping_from_numero, shipping_from_bairro, shipping_from_cidade, shipping_from_uf')
+      .eq('store_id', storeId)
+      .single()
+
+    if (!error && data?.shipping_from_cep) {
+      return {
+        nome: data.shipping_from_nome ?? '',
+        cep: data.shipping_from_cep,
+        rua: data.shipping_from_rua ?? '',
+        numero: data.shipping_from_numero ?? '',
+        bairro: data.shipping_from_bairro ?? '',
+        cidade: data.shipping_from_cidade ?? '',
+        uf: data.shipping_from_uf ?? '',
+      }
+    }
+  } catch {
+    // falha silenciosa — tenta fallback abaixo
+  }
+
+  // Prioridade 2: store-config.json
+  const config = loadStoreConfig(storeId)
+  const me = config.melhor_envio
+
+  if (!me.from_cep) {
+    throw new Error(
+      `[melhor-envio] Endereço de origem não configurado para loja '${storeId}'. ` +
+      `Preencha shipping_from_* na tabela stores ou from_* no store-config.json`
+    )
+  }
+
+  return {
+    nome: me.from_nome ?? '',
+    cep: me.from_cep,
+    rua: me.from_rua ?? '',
+    numero: me.from_numero ?? '',
+    bairro: me.from_bairro ?? '',
+    cidade: me.from_cidade ?? '',
+    uf: me.from_uf ?? '',
+  }
+}
+
+// ─── API pública ──────────────────────────────────────────────────────────────
+
+export async function calcularFrete(
+  storeId: string,
+  params: {
+    cepDestino: string
+    produtos: Array<{
+      id: string
+      nome: string
+      peso: number
+      altura: number
+      largura: number
+      comprimento: number
+      valor: number
+      quantidade: number
+    }>
+  }
+) {
+  const [token, origin] = await Promise.all([
+    getMEToken(storeId),
+    getShippingOrigin(storeId),
+  ])
 
   const body = {
-    from: { postal_code: originCep.replace(/\D/g, '') },
+    from: { postal_code: origin.cep.replace(/\D/g, '') },
     to: { postal_code: params.cepDestino.replace(/\D/g, '') },
     products: params.produtos.map(p => ({
       id: p.id,
@@ -52,7 +126,7 @@ export async function calcularFrete(params: {
     services: '1,2,3,4', // PAC, SEDEX e outros
   }
 
-  const res = await fetch(`${BASE_URL}/me/shipment/calculate`, {
+  const res = await fetch(`${ME_BASE_URL}/me/shipment/calculate`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -70,7 +144,6 @@ export async function calcularFrete(params: {
 
   const data = await res.json()
 
-  // Filtra serviços com erro e retorna apenas os válidos
   return data
     .filter((s: any) => !s.error && s.price)
     .map((s: any) => ({
@@ -85,12 +158,13 @@ export async function calcularFrete(params: {
 }
 
 export async function melhorEnvioFetch(
+  storeId: string,
   endpoint: string,
   options?: RequestInit
 ): Promise<any> {
-  const token = await getMEToken()
+  const token = await getMEToken(storeId)
 
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
+  const res = await fetch(`${ME_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
       Authorization: `Bearer ${token}`,

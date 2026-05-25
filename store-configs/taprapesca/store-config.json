@@ -1,8 +1,14 @@
 {
-  "store_id": "",
-  "nome": "",
-  "dominio": "",
+  "store_id": "taprapesca",
+  "nome": "Tá Pra Pesca",
+  "dominio": "taprapesca.com.br",
   "regime": "SN",
+
+  "integrations": {
+    "bling": true,
+    "mercado_pago": true,
+    "melhor_envio": true
+  },
 
   "tema": {
     "cor_primaria": "#000000",
@@ -28,7 +34,7 @@
     "token": "env:ME_TOKEN",
     "sandbox": false,
     "from_nome": "",
-    "from_cep": "",
+    "from_cep": "env:MELHOR_ENVIO_ORIGIN_CEP",
     "from_rua": "",
     "from_numero": "",
     "from_bairro": "",

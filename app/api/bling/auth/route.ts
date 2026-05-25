@@ -1,3 +1,6 @@
+// LEGADO: /api/bling/auth — inicia fluxo OAuth para Bling
+// Substituído por /api/oauth/bling/authorize (com suporte multi-tenant e state CSRF)
+// Manter funcionando até confirmar que o fluxo novo está em produção
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";

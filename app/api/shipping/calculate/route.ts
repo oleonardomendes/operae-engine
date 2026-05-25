@@ -10,7 +10,8 @@ export async function POST(req: Request) {
       return Response.json({ error: 'CEP obrigatório' }, { status: 400 })
     }
 
-    const opcoes = await calcularFrete({ cepDestino, produtos })
+    // TODO: extrair storeId do contexto quando multi-tenant estiver ativo
+    const opcoes = await calcularFrete('taprapesca', { cepDestino, produtos })
     return Response.json({ opcoes })
   } catch (e: any) {
     console.error('[shipping]', e.message)

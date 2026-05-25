@@ -1,13 +1,8 @@
 import { MercadoPagoConfig, Preference } from 'mercadopago'
 import { NextResponse } from 'next/server'
+import { getMPAccessToken } from '@/lib/mercado-pago'
 
 export const dynamic = 'force-dynamic'
-
-const accessToken = process.env.NEXT_PUBLIC_MP_ENV === 'test'
-  ? process.env.MP_ACCESS_TOKEN_TEST!
-  : process.env.MP_ACCESS_TOKEN!
-
-const client = new MercadoPagoConfig({ accessToken })
 
 export async function POST(req: Request) {
   try {
@@ -29,6 +24,11 @@ export async function POST(req: Request) {
           unit_price: Number(kitPreco) + Number(freteValor),
           currency_id: 'BRL',
         }]
+
+    // TODO: extrair storeId do contexto do usuário autenticado quando multi-tenant estiver ativo
+    const storeId = 'taprapesca'
+    const accessToken = await getMPAccessToken(storeId)
+    const client = new MercadoPagoConfig({ accessToken })
 
     const userId = req.headers.get('x-user-id') || null
     const pedidoId = crypto.randomUUID()

@@ -2,15 +2,10 @@ import { MercadoPagoConfig, Payment } from 'mercadopago'
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { blingFetch } from '@/lib/bling'
-import { melhorEnvioFetch } from '@/lib/melhor-envio'
+import { melhorEnvioFetch, getShippingOrigin } from '@/lib/melhor-envio'
+import { getMPAccessToken } from '@/lib/mercado-pago'
 
 export const dynamic = 'force-dynamic'
-
-const client = new MercadoPagoConfig({
-  accessToken: process.env.NEXT_PUBLIC_MP_ENV === 'test'
-    ? process.env.MP_ACCESS_TOKEN_TEST!
-    : process.env.MP_ACCESS_TOKEN!
-})
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms))
 
@@ -27,6 +22,12 @@ export async function POST(req: Request) {
   console.log('[webhook] recebido:', JSON.stringify(body))
 
   try {
+    // TODO: extrair storeId do external_reference quando multi-tenant estiver ativo
+    // O external_reference atual é um UUID de pedido sem prefixo de loja
+    const storeId = 'taprapesca'
+    const accessToken = await getMPAccessToken(storeId)
+    const client = new MercadoPagoConfig({ accessToken })
+
     // Busca dados do pagamento no MP
     let data: any
     try {
@@ -414,14 +415,18 @@ export async function POST(req: Request) {
       try {
         await delay(500)
 
+        // TODO: extrair meStoreId do external_reference quando multi-tenant estiver ativo
+        const meStoreId = storeId
+        const origin = await getShippingOrigin(meStoreId)
+
         const meBody = {
           service: Number(pedidoCompleto.frete_servico_id),
           from: {
-            name: 'Tá Pra Pesca',
-            phone: process.env.STORE_PHONE,
-            postal_code: process.env.MELHOR_ENVIO_ORIGIN_CEP?.replace(/\D/g, ''),
-            address: process.env.STORE_ADDRESS,
-            city: process.env.STORE_CITY,
+            name: origin.nome,
+            phone: origin.phone,
+            postal_code: origin.cep.replace(/\D/g, ''),
+            address: origin.rua,
+            city: origin.cidade,
           },
           to: {
             name: nomeCliente,
@@ -460,7 +465,7 @@ export async function POST(req: Request) {
 
         console.log('[webhook] ME body completo:', JSON.stringify(meBody))
 
-        const meCarrinho = await melhorEnvioFetch('/me/cart', {
+        const meCarrinho = await melhorEnvioFetch(meStoreId, '/me/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(meBody),

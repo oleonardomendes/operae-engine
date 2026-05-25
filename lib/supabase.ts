@@ -1,3 +1,5 @@
+// LEGADO: será removido após migração completa para lib/supabase-server.ts
+// Não usar em código novo — use createServiceClient() de lib/supabase-server.ts nas rotas de API
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.SUPABASE_URL!

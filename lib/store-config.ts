@@ -19,26 +19,26 @@ export interface StoreConfig {
   bling: {
     client_id: string
     client_secret: string
-    access_token: string
-    refresh_token: string
+    access_token?: string   // legado — migrar para store_integrations
+    refresh_token?: string  // legado — migrar para store_integrations
   }
 
   mercado_pago: {
-    access_token: string
+    access_token?: string   // legado — migrar para store_integrations
     public_key: string
     webhook_secret: string
   }
 
   melhor_envio: {
-    token: string
+    token?: string     // legado — migrar para store_integrations
     sandbox: boolean
-    from_nome: string
-    from_cep: string
-    from_rua: string
-    from_numero: string
-    from_bairro: string
-    from_cidade: string
-    from_uf: string
+    from_nome?: string
+    from_cep?: string
+    from_rua?: string
+    from_numero?: string
+    from_bairro?: string
+    from_cidade?: string
+    from_uf?: string
   }
 
   resend: {
