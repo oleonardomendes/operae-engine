@@ -117,7 +117,8 @@ function getSugerido(
 const fmt = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
 
-export default async function ProdutoPage({ params }: { params: { codigo: string } }) {
+export default async function ProdutoPage({ params }: { params: Promise<{ codigo: string }> }) {
+  const { codigo } = await params
   let todosProdutos: ProdutoPage[] = []
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let rawBlingMap: Record<string, any> = {}
@@ -172,12 +173,12 @@ export default async function ProdutoPage({ params }: { params: { codigo: string
   }
 
   const produto = todosProdutos.find(
-    p => String(p.codigo).trim() === String(params.codigo).trim()
+    p => String(p.codigo).trim() === String(codigo).trim()
   )
   if (!produto) notFound()
 
   // Log para diagnóstico — remover após confirmar campo correto
-  const rawP = rawBlingMap[String(params.codigo).trim()]
+  const rawP = rawBlingMap[String(codigo).trim()]
   if (rawP) {
     console.log('[produto] ESTOQUE RAW:', JSON.stringify(rawP.estoqueAtual ?? rawP.estoque ?? 'undefined'))
     console.log('[produto] PRODUTO RAW KEYS:', Object.keys(rawP).join(', '))
