@@ -27,11 +27,13 @@ export async function POST(req: Request) {
 
   if (!storeId) {
     console.error('[webhook] store_id ausente na URL. Configure notification_url com ?store_id=')
-    await supabase.from('operation_logs').insert({
-      tipo: 'webhook_erro',
-      descricao: 'store_id ausente na URL do webhook MP',
-      payload: { paymentId },
-    }).catch(() => {})
+    try {
+      await supabase.from('operation_logs').insert({
+        tipo: 'webhook_erro',
+        descricao: 'store_id ausente na URL do webhook MP',
+        payload: { paymentId },
+      })
+    } catch {}
     return NextResponse.json({ error: 'store_id não determinado' }, { status: 400 })
   }
 
