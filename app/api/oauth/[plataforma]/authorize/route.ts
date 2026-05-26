@@ -50,9 +50,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { plataforma: string } }
+  { params }: { params: Promise<{ plataforma: string }> }
 ) {
-  const plataforma = params.plataforma
+  const { plataforma } = await params
 
   if (!SUPPORTED_PLATFORMS.has(plataforma)) {
     return NextResponse.json(

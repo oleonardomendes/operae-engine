@@ -92,9 +92,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { plataforma: string } }
+  { params }: { params: Promise<{ plataforma: string }> }
 ) {
-  const plataforma = params.plataforma
+  const { plataforma } = await params
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   const painelUrl = `${appUrl}/painel/integracoes`
 
