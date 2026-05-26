@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import StoreHeader from '@/components/StoreHeader'
-import StoreFooter from '@/components/StoreFooter'
+import Footer from '@/components/Footer'
 import { useStore } from '@/contexts/StoreContext'
 
 const grupos = [
@@ -158,7 +158,7 @@ export default function FaqPage() {
           </div>
         </div>
       </main>
-      <StoreFooter />
+      <Footer />
     </>
   )
 }

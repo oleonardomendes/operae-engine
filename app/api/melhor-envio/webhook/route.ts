@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   // Busca o pedido pelo ME carrinho ID
   const { data: pedido } = await supabase
     .from('pedidos')
-    .select('id, bling_pedido_id')
+    .select('id, bling_pedido_id, store_id')
     .eq('me_carrinho_id', meCarrinhoId)
     .single()
 
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   // Atualiza Bling com tracking e status
   if (pedido.bling_pedido_id && tracking) {
     try {
-      await blingFetch(`/pedidos/vendas/${pedido.bling_pedido_id}`, {
+      await blingFetch(pedido.store_id!, `/pedidos/vendas/${pedido.bling_pedido_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

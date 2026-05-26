@@ -27,9 +27,11 @@ interface BlingProduto {
   estoque: BlingEstoque | null;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const body = await blingFetch("/produtos?limite=100&pagina=1&situacao=A");
+    const storeId = new URL(req.url).searchParams.get('store_id')
+    if (!storeId) return NextResponse.json({ error: 'store_id obrigatório' }, { status: 400 })
+    const body = await blingFetch(storeId, "/produtos?limite=100&pagina=1&situacao=A");
     const raw: BlingProduto[] = body.data ?? [];
 
     const produtos = raw

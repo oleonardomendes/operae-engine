@@ -1,12 +1,13 @@
 import LojaGrid from "@/components/LojaGrid";
 import type { BlingProduto } from "@/components/LojaGrid";
 import Newsletter from "@/components/Newsletter";
-import StoreFooter from "@/components/StoreFooter";
+import Footer from "@/components/Footer";
 import StoreHeader from "@/components/StoreHeader";
 import HomeHashRedirect from "@/components/HomeHashRedirect";
 import Link from "next/link";
 import { blingFetch } from "@/lib/bling";
 import { supabase } from "@/lib/supabase";
+import { resolveStoreId } from "@/lib/store-id";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -37,12 +38,13 @@ interface HomeProps {
 
 export default async function Home({ searchParams }: HomeProps) {
   const { busca, categoria } = (await searchParams) ?? {}
+  const storeId = await resolveStoreId()
   let produtos: BlingProduto[] = [];
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [data, { data: customizacoes }] = await Promise.all([
-      blingFetch("/produtos?limite=100&pagina=1"),
+      blingFetch(storeId, "/produtos?limite=100&pagina=1"),
       supabase
         .from("produto_customizacoes")
         .select("bling_codigo, nome_custom, preco_custom, imagens, video_url, destaque, descricao_custom"),
@@ -122,7 +124,7 @@ export default async function Home({ searchParams }: HomeProps) {
       </Link>
 
       <Newsletter />
-      <StoreFooter />
+      <Footer />
     </>
   );
 }

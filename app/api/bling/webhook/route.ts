@@ -7,6 +7,11 @@ import { revalidatePath } from 'next/cache'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request) {
+  const storeId = new URL(req.url).searchParams.get('store_id')
+  if (!storeId) {
+    return NextResponse.json({ error: 'store_id obrigatório' }, { status: 400 })
+  }
+
   const signature = req.headers.get('x-bling-signature-256')
   const body = await req.text()
 
@@ -71,7 +76,7 @@ export async function POST(req: Request) {
       if (!isProduto || !id) continue
 
       try {
-        const data = await blingFetch(`/produtos/${id}`)
+        const data = await blingFetch(storeId, `/produtos/${id}`)
         const p = data?.data
 
         if (!p) continue
