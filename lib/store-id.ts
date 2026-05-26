@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 
-export function resolveStoreId(): string {
-  const headersList = headers()
+export async function resolveStoreId(): Promise<string> {
+  const headersList = await headers()
   const host = headersList.get('host') ?? ''
 
   // Em produção: extrai do subdomínio (ex: loja-a.operae.com.br → 'loja-a')

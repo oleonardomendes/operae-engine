@@ -1,10 +1,10 @@
+'use client'
+
 import Link from "next/link";
-import { resolveStoreId } from '@/lib/store-id'
-import { loadStoreConfig } from '@/lib/store-config'
+import { useStore } from '@/contexts/StoreContext'
 
 export default function Footer() {
-  const storeId = resolveStoreId()
-  const config = loadStoreConfig(storeId)
+  const config = useStore()
   const year = new Date().getFullYear();
 
   return (

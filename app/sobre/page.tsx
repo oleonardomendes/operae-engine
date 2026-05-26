@@ -5,8 +5,8 @@ import StoreFooter from '@/components/StoreFooter'
 import { resolveStoreId } from '@/lib/store-id'
 import { loadStoreConfig } from '@/lib/store-config'
 
-export function generateMetadata(): Metadata {
-  const storeId = resolveStoreId()
+export async function generateMetadata(): Promise<Metadata> {
+  const storeId = await resolveStoreId()
   const config = loadStoreConfig(storeId)
   return {
     title: `Quem Somos — ${config.nome}`,
@@ -14,8 +14,8 @@ export function generateMetadata(): Metadata {
   }
 }
 
-export default function SobrePage() {
-  const storeId = resolveStoreId()
+export default async function SobrePage() {
+  const storeId = await resolveStoreId()
   const config = loadStoreConfig(storeId)
   const waNumber = config.contato?.whatsapp ?? ''
 

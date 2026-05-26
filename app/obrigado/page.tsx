@@ -6,8 +6,8 @@ import SalvarPedido from "@/components/SalvarPedido";
 import { resolveStoreId } from "@/lib/store-id";
 import { loadStoreConfig } from "@/lib/store-config";
 
-export function generateMetadata(): Metadata {
-  const storeId = resolveStoreId()
+export async function generateMetadata(): Promise<Metadata> {
+  const storeId = await resolveStoreId()
   const config = loadStoreConfig(storeId)
   return {
     title: `Pedido confirmado — ${config.nome}`,
@@ -17,17 +17,18 @@ export function generateMetadata(): Metadata {
 }
 
 interface Props {
-  searchParams: { payment_id?: string; id?: string; nome?: string; preco?: string }
+  searchParams: Promise<{ payment_id?: string; id?: string; nome?: string; preco?: string }>
 }
 
-export default function Obrigado({ searchParams }: Props) {
-  const storeId = resolveStoreId()
+export default async function Obrigado({ searchParams }: Props) {
+  const params = await searchParams
+  const storeId = await resolveStoreId()
   const config = loadStoreConfig(storeId)
   const waNumber = config.contato?.whatsapp ?? ''
-  const paymentId = searchParams?.payment_id
-  const id = searchParams?.id
-  const nome = searchParams?.nome ? decodeURIComponent(searchParams.nome) : ''
-  const preco = Number(searchParams?.preco || 0)
+  const paymentId = params?.payment_id
+  const id = params?.id
+  const nome = params?.nome ? decodeURIComponent(params.nome) : ''
+  const preco = Number(params?.preco || 0)
 
   return (
     <div style={styles.page}>

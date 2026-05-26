@@ -1,10 +1,10 @@
+'use client'
+
 import Link from "next/link";
-import { resolveStoreId } from '@/lib/store-id'
-import { loadStoreConfig } from '@/lib/store-config'
+import { useStore } from '@/contexts/StoreContext'
 
 export function FinalCTA() {
-  const storeId = resolveStoreId()
-  const config = loadStoreConfig(storeId)
+  const config = useStore()
   const waNumber = config.contato?.whatsapp ?? ''
   const waMsg = "Olá!%20Quero%20saber%20mais%20sobre%20os%20produtos."
 

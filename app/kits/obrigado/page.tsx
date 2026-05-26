@@ -7,8 +7,8 @@ import { kits } from "@/data/kits";
 import { resolveStoreId } from "@/lib/store-id";
 import { loadStoreConfig } from "@/lib/store-config";
 
-export function generateMetadata(): Metadata {
-  const storeId = resolveStoreId()
+export async function generateMetadata(): Promise<Metadata> {
+  const storeId = await resolveStoreId()
   const config = loadStoreConfig(storeId)
   return {
     title: `Pedido confirmado — ${config.nome}`,
@@ -18,15 +18,16 @@ export function generateMetadata(): Metadata {
 }
 
 interface Props {
-  searchParams: { payment_id?: string; kit?: string }
+  searchParams: Promise<{ payment_id?: string; kit?: string }>
 }
 
-export default function Obrigado({ searchParams }: Props) {
-  const storeId = resolveStoreId()
+export default async function Obrigado({ searchParams }: Props) {
+  const params = await searchParams
+  const storeId = await resolveStoreId()
   const config = loadStoreConfig(storeId)
   const waNumber = config.contato?.whatsapp ?? ''
-  const kit = kits.find(k => k.id === Number(searchParams?.kit))
-  const paymentId = searchParams?.payment_id
+  const kit = kits.find(k => k.id === Number(params?.kit))
+  const paymentId = params?.payment_id
 
   return (
     <div style={styles.page}>

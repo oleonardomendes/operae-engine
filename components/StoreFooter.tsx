@@ -1,10 +1,10 @@
-import Link from 'next/link'
-import { resolveStoreId } from '@/lib/store-id'
-import { loadStoreConfig } from '@/lib/store-config'
+'use client'
 
-export default async function StoreFooter() {
-  const storeId = resolveStoreId()
-  const config = loadStoreConfig(storeId)
+import Link from 'next/link'
+import { useStore } from '@/contexts/StoreContext'
+
+export default function StoreFooter() {
+  const config = useStore()
   const waNumber = config.contato?.whatsapp ?? ''
   const email = config.contato?.email ?? ''
   const instagramUrl = config.contato?.instagram_url ?? ''

@@ -9,8 +9,8 @@ import { GoogleAds } from "@/components/analytics/GoogleAds";
 import { resolveStoreId } from "@/lib/store-id";
 import { loadStoreConfig } from "@/lib/store-config";
 
-export function generateMetadata(): Metadata {
-  const storeId = resolveStoreId()
+export async function generateMetadata(): Promise<Metadata> {
+  const storeId = await resolveStoreId()
   const config = loadStoreConfig(storeId)
 
   return {
@@ -32,12 +32,12 @@ export function generateMetadata(): Metadata {
   }
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const storeId = resolveStoreId()
+  const storeId = await resolveStoreId()
   const config = loadStoreConfig(storeId)
 
   const gtmId = config.analytics.gtm_id || undefined

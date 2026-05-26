@@ -4,8 +4,8 @@ import { kitsDetalhes } from '@/data/kitsDetalhes'
 import { resolveStoreId } from '@/lib/store-id'
 import { loadStoreConfig } from '@/lib/store-config'
 
-export function generateMetadata(): Metadata {
-  const storeId = resolveStoreId()
+export async function generateMetadata(): Promise<Metadata> {
+  const storeId = await resolveStoreId()
   const config = loadStoreConfig(storeId)
   return {
     title: `Kit Rio & Tilápia — ${config.nome}`,

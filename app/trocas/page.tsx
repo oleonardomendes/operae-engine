@@ -4,8 +4,8 @@ import StoreFooter from '@/components/StoreFooter'
 import { resolveStoreId } from '@/lib/store-id'
 import { loadStoreConfig } from '@/lib/store-config'
 
-export function generateMetadata(): Metadata {
-  const storeId = resolveStoreId()
+export async function generateMetadata(): Promise<Metadata> {
+  const storeId = await resolveStoreId()
   const config = loadStoreConfig(storeId)
   return {
     title: `Trocas e Devoluções — ${config.nome}`,
@@ -13,8 +13,8 @@ export function generateMetadata(): Metadata {
   }
 }
 
-export default function TrocasPage() {
-  const storeId = resolveStoreId()
+export default async function TrocasPage() {
+  const storeId = await resolveStoreId()
   const config = loadStoreConfig(storeId)
   const waNumber = config.contato?.whatsapp ?? ''
   const email = config.contato?.email ?? ''
