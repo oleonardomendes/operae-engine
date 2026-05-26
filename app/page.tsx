@@ -32,10 +32,11 @@ function detectarCategoria(nome: string): string {
 }
 
 interface HomeProps {
-  searchParams?: { busca?: string; categoria?: string };
+  searchParams?: Promise<{ busca?: string; categoria?: string }>;
 }
 
-export default async function Home({ searchParams = {} }: HomeProps) {
+export default async function Home({ searchParams }: HomeProps) {
+  const { busca, categoria } = (await searchParams) ?? {}
   let produtos: BlingProduto[] = [];
 
   try {
@@ -88,8 +89,8 @@ export default async function Home({ searchParams = {} }: HomeProps) {
     produtos = [];
   }
 
-  const initialBusca = searchParams.busca?.trim() || "";
-  const initialCategoria = searchParams.categoria || "";
+  const initialBusca = busca?.trim() || "";
+  const initialCategoria = categoria || "";
 
   return (
     <>
