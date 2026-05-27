@@ -73,12 +73,34 @@ export function OnboardingLayout() {
 
   const step = useMemo(() => {
     let s = 1
-    if (storeInfo) s = 4
-    if (integrations.bling) s = 5
-    if (integrations.mercado_pago) s = 6
-    if (integrations.melhor_envio) s = 7
-    return Math.min(s, 6)
-  }, [storeInfo, integrations])
+    let blingOauth = false
+    let mpOauth = false
+    let meOauth = false
+    let enderecoSalvo = false
+    let finalizado = false
+
+    for (const msg of messages) {
+      for (const inv of msg.toolInvocations ?? []) {
+        if (inv.state !== 'result') continue
+        const r = inv.result as Record<string, unknown>
+        if (inv.toolName === 'iniciar_oauth' && r?.sucesso) {
+          const plat = r.plataforma as string
+          if (plat === 'bling') blingOauth = true
+          else if (plat === 'mercado_pago') mpOauth = true
+          else if (plat === 'melhor_envio') meOauth = true
+        }
+        if (inv.toolName === 'salvar_endereco' && r?.sucesso) enderecoSalvo = true
+        if (inv.toolName === 'finalizar_onboarding' && r?.sucesso) finalizado = true
+      }
+    }
+
+    if (storeInfo) s = 2
+    if (blingOauth) s = 3
+    if (mpOauth) s = 4
+    if (meOauth) s = 5
+    if (enderecoSalvo || finalizado) s = 6
+    return s
+  }, [messages, storeInfo])
 
   return (
     <>
