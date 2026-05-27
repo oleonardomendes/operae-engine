@@ -1,22 +1,19 @@
-export default function Home() {
+import Navbar from '@/components/landing/Navbar'
+import Hero from '@/components/landing/Hero'
+import HowItWorks from '@/components/landing/HowItWorks'
+import WhatIsIncluded from '@/components/landing/WhatIsIncluded'
+import CTASection from '@/components/landing/CTASection'
+import Footer from '@/components/landing/Footer'
+
+export default function LandingPage() {
   return (
-    <main style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      background: '#0D0D12',
-      color: '#F5F5F7',
-      fontFamily: 'system-ui, sans-serif'
-    }}>
-      <div style={{ textAlign: 'center' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: 500 }}>
-          Guiamos
-        </h1>
-        <p style={{ color: '#8E8E9A', marginTop: '8px' }}>
-          Em construção
-        </p>
-      </div>
-    </main>
+    <>
+      <Navbar />
+      <Hero />
+      <HowItWorks />
+      <WhatIsIncluded />
+      <CTASection />
+      <Footer />
+    </>
   )
 }
