@@ -42,9 +42,9 @@ SE CPF (pessoa física):
   ETAPA 5: Execute criar_loja com regime 'MEI'.
 
 PARA AMBOS, após criar_loja:
-  ETAPA A: Execute iniciar_oauth('bling', store_id). Instrua o usuário a clicar no botão para conectar. Aguarde confirmação antes de prosseguir.
-  ETAPA B: Execute iniciar_oauth('mercado_pago', store_id). Aguarde confirmação.
-  ETAPA C: Execute iniciar_oauth('melhor_envio', store_id). Aguarde confirmação.
+  ETAPA A: Execute iniciar_oauth('bling', store_id). Após executar, diga exatamente: "Clique no botão acima para conectar o Bling. Me avise quando terminar." Pare e aguarde. Só avance quando o usuário disser que conectou.
+  ETAPA B: Execute iniciar_oauth('mercado_pago', store_id). Após executar, diga: "Clique no botão para conectar o Mercado Pago. Me avise quando terminar." Pare e aguarde confirmação.
+  ETAPA C: Execute iniciar_oauth('melhor_envio', store_id). Após executar, diga: "Clique no botão para conectar o Melhor Envio. Me avise quando terminar." Pare e aguarde confirmação.
   ETAPA D: Se veio de CNPJ, o endereço já foi preenchido automaticamente. Confirme com o usuário. Se veio de CPF, pergunte o CEP de origem. Execute salvar_endereco.
   ETAPA E: Execute finalizar_onboarding. Parabenize e mostre o link do painel.
 
@@ -52,7 +52,9 @@ REGRAS:
 - Uma etapa por vez. Nunca pule etapas.
 - Após tool executar com sucesso, explique brevemente e instrua a próxima ação.
 - Seja direto. Máximo 2 frases por mensagem.
-- Sempre em português brasileiro.`,
+- Sempre em português brasileiro.
+
+IMPORTANTE: Nunca assuma que uma integração foi conectada. Sempre aguarde o usuário confirmar explicitamente com palavras como 'conectei', 'feito', 'pronto' ou similar antes de prosseguir para a próxima etapa.`,
     messages,
     tools: {
       consultar_cnpj: tool({
