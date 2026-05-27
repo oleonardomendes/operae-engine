@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/groq": "^1.0.0",
     "@mercadopago/sdk-react": "^0.0.17",
     "@scalar/nextjs-api-reference": "^0.4.0",
     "@supabase/ssr": "^0.5.0",

@@ -1,7 +1,9 @@
 import { streamText, tool } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import { createGroq } from '@ai-sdk/groq'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase-server'
+
+const groq = createGroq({ apiKey: process.env.GROQ_API_KEY })
 
 export const maxDuration = 60
 
@@ -21,7 +23,7 @@ export async function POST(req: Request) {
   const supabase = createServiceClient()
 
   const result = streamText({
-    model: anthropic('claude-sonnet-4-6'),
+    model: groq('llama-3.3-70b-versatile'),
     system: `Você é o assistente do Guiamos, uma plataforma que cria lojas de e-commerce completas.
 
 Seu objetivo é guiar o lojista através do onboarding de forma natural e amigável.
