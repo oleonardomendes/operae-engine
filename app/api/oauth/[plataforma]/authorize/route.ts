@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-
 type PlataformaUrl = 'bling' | 'mercado-pago' | 'melhor-envio'
 
 interface AuthUrlParams {
@@ -10,8 +8,6 @@ interface AuthUrlParams {
   state: string
   callbackUrl: string
 }
-
-// ─── Config por plataforma ────────────────────────────────────────────────────
 
 const PLATFORM_AUTH_URLS: Record<PlataformaUrl, (p: AuthUrlParams) => string> = {
   'bling': ({ clientId, state }) =>
@@ -43,8 +39,6 @@ const PLATFORM_CLIENT_IDS: Record<PlataformaUrl, string | undefined> = {
 }
 
 const SUPPORTED_PLATFORMS = new Set<string>(['bling', 'mercado-pago', 'melhor-envio'])
-
-// ─── Handler ──────────────────────────────────────────────────────────────────
 
 export const dynamic = 'force-dynamic'
 
@@ -88,35 +82,15 @@ export async function GET(
     )
   }
 
-  const nonce = crypto.randomUUID()
-  const stateJson = JSON.stringify({
-    storeId,
-    plataforma,
-    timestamp: Date.now(),
-    nonce,
-  })
-  const state = btoa(stateJson)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '')
-
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   const callbackUrl = `${appUrl}/api/oauth/${plataforma}/callback`
 
+  // Use storeId directly as state — simple and reliable across tabs
   const authUrl = PLATFORM_AUTH_URLS[plataforma as PlataformaUrl]({
     clientId,
-    state,
+    state: storeId,
     callbackUrl,
   })
 
-  const response = NextResponse.redirect(authUrl)
-  response.cookies.set('oauth_state', state, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 600,
-    path: '/',
-  })
-
-  return response
+  return NextResponse.redirect(authUrl)
 }

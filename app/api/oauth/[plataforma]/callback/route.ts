@@ -2,16 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { saveIntegrationToken, type Plataforma } from '@/lib/integrations'
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
-
 type PlataformaUrl = 'bling' | 'mercado-pago' | 'melhor-envio'
-
-interface OAuthStatePayload {
-  storeId: string
-  plataforma: PlataformaUrl
-  timestamp: number
-  nonce: string
-}
 
 interface BlingTokenResponse extends Record<string, unknown> {
   access_token: string
@@ -36,8 +27,6 @@ interface MeTokenResponse extends Record<string, unknown> {
 
 type RawTokenResponse = BlingTokenResponse | MpTokenResponse | MeTokenResponse
 
-// ─── Config por plataforma ────────────────────────────────────────────────────
-
 const TOKEN_URLS: Record<PlataformaUrl, string> = {
   'bling': 'https://www.bling.com.br/Api/v3/oauth/token',
   'mercado-pago': 'https://api.mercadopago.com/oauth/token',
@@ -57,14 +46,6 @@ const CREDENTIALS: Record<PlataformaUrl, { id: string | undefined; secret: strin
 }
 
 const SUPPORTED_PLATFORMS = new Set<string>(['bling', 'mercado-pago', 'melhor-envio'])
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function decodeState(state: string): OAuthStatePayload {
-  const base64 = state.replace(/-/g, '+').replace(/_/g, '/')
-  const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=')
-  return JSON.parse(atob(padded)) as OAuthStatePayload
-}
 
 async function logOperation(
   storeId: string,
@@ -86,8 +67,6 @@ async function logOperation(
   }
 }
 
-// ─── Handler ──────────────────────────────────────────────────────────────────
-
 export const dynamic = 'force-dynamic'
 
 export async function GET(
@@ -96,36 +75,19 @@ export async function GET(
 ) {
   const { plataforma } = await params
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const painelUrl = `${appUrl}/painel/integracoes`
+  const onboardingUrl = `${appUrl}/onboarding`
 
   if (!SUPPORTED_PLATFORMS.has(plataforma)) {
-    return NextResponse.redirect(`${painelUrl}?erro=plataforma_invalida`)
+    return NextResponse.redirect(`${onboardingUrl}?${plataforma}=erro`)
   }
 
   const code = req.nextUrl.searchParams.get('code')
-  const stateParam = req.nextUrl.searchParams.get('state')
-  const stateCookie = req.cookies.get('oauth_state')?.value
+  const storeId = req.nextUrl.searchParams.get('state')
 
-  if (!code || !stateParam) {
-    return NextResponse.redirect(`${painelUrl}?erro=${plataforma}&motivo=codigo_ausente`)
+  if (!code || !storeId) {
+    return NextResponse.redirect(`${onboardingUrl}?${plataforma}=erro`)
   }
 
-  if (!stateCookie || stateParam !== stateCookie) {
-    return NextResponse.redirect(`${painelUrl}?erro=${plataforma}&motivo=state_invalido`)
-  }
-
-  let statePayload: OAuthStatePayload
-  try {
-    statePayload = decodeState(stateParam)
-  } catch {
-    return NextResponse.redirect(`${painelUrl}?erro=${plataforma}&motivo=state_corrompido`)
-  }
-
-  if (Date.now() - statePayload.timestamp > 10 * 60 * 1000) {
-    return NextResponse.redirect(`${painelUrl}?erro=${plataforma}&motivo=state_expirado`)
-  }
-
-  const { storeId } = statePayload
   const dbPlatform = DB_PLATFORM_MAP[plataforma as PlataformaUrl]
   const creds = CREDENTIALS[plataforma as PlataformaUrl]
 
@@ -134,7 +96,7 @@ export async function GET(
       plataforma: dbPlatform,
       motivo: 'credenciais_ausentes',
     })
-    return NextResponse.redirect(`${painelUrl}?erro=${plataforma}&motivo=credenciais_ausentes`)
+    return NextResponse.redirect(`${onboardingUrl}?${plataforma}=erro`)
   }
 
   const callbackUrl = `${appUrl}/api/oauth/${plataforma}/callback`
@@ -168,9 +130,7 @@ export async function GET(
   } catch (err) {
     const motivo = err instanceof Error ? err.message : 'troca_token_falhou'
     await logOperation(storeId, 'oauth_connect', 'error', { plataforma: dbPlatform, motivo })
-    return NextResponse.redirect(
-      `${painelUrl}?erro=${plataforma}&motivo=${encodeURIComponent(motivo)}`
-    )
+    return NextResponse.redirect(`${onboardingUrl}?${plataforma}=erro`)
   }
 
   try {
@@ -184,14 +144,10 @@ export async function GET(
   } catch (err) {
     const motivo = err instanceof Error ? err.message : 'salvar_token_falhou'
     await logOperation(storeId, 'oauth_connect', 'error', { plataforma: dbPlatform, motivo })
-    return NextResponse.redirect(
-      `${painelUrl}?erro=${plataforma}&motivo=${encodeURIComponent(motivo)}`
-    )
+    return NextResponse.redirect(`${onboardingUrl}?${plataforma}=erro`)
   }
 
   await logOperation(storeId, 'oauth_connect', 'success', { plataforma: dbPlatform })
 
-  const response = NextResponse.redirect(`${painelUrl}?sucesso=${plataforma}`)
-  response.cookies.delete('oauth_state')
-  return response
+  return NextResponse.redirect(`${onboardingUrl}?${plataforma}=conectado`)
 }
