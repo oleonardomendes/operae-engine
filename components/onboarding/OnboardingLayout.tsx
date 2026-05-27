@@ -1,0 +1,158 @@
+'use client'
+
+import { useChat } from 'ai/react'
+import { useMemo } from 'react'
+import { ChatPanel } from './ChatPanel'
+import { CockpitPanel } from './CockpitPanel'
+import type { OAuthAction, StoreInfo, IntegrationStatus } from './types'
+
+export function OnboardingLayout() {
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+    api: '/api/chat',
+    initialMessages: [
+      {
+        id: 'welcome',
+        role: 'assistant',
+        content: 'Olá! Vamos criar sua loja juntos. Qual será o nome da sua loja?',
+      },
+    ],
+  })
+
+  // Extract state from tool results across all messages
+  const storeInfo = useMemo<StoreInfo | null>(() => {
+    for (const msg of messages) {
+      for (const inv of msg.toolInvocations ?? []) {
+        if (inv.toolName === 'criar_loja' && inv.state === 'result') {
+          const r = inv.result as Record<string, unknown>
+          if (r?.sucesso) {
+            return {
+              nome: r.nome as string,
+              segmento: r.segmento as string,
+              regime: r.regime as string,
+              store_id: r.store_id as string,
+            }
+          }
+        }
+      }
+    }
+    return null
+  }, [messages])
+
+  const integrations = useMemo<IntegrationStatus>(() => {
+    const status: IntegrationStatus = { bling: false, mercado_pago: false, melhor_envio: false }
+    for (const msg of messages) {
+      for (const inv of msg.toolInvocations ?? []) {
+        if (inv.toolName === 'verificar_integracao' && inv.state === 'result') {
+          const r = inv.result as Record<string, unknown>
+          if (r?.conectado) {
+            const plat = r.plataforma as keyof IntegrationStatus
+            if (plat in status) status[plat] = true
+          }
+        }
+      }
+    }
+    return status
+  }, [messages])
+
+  const oauthAction = useMemo<OAuthAction | null>(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      for (const inv of messages[i].toolInvocations ?? []) {
+        if (inv.toolName === 'iniciar_oauth' && inv.state === 'result') {
+          const r = inv.result as Record<string, unknown>
+          if (r?.sucesso) {
+            return {
+              url: r.url as string,
+              plataforma: r.plataforma as string,
+            }
+          }
+        }
+      }
+    }
+    return null
+  }, [messages])
+
+  const step = useMemo(() => {
+    let s = 1
+    if (storeInfo) s = 4
+    if (integrations.bling) s = 5
+    if (integrations.mercado_pago) s = 6
+    if (integrations.melhor_envio) s = 7
+    return Math.min(s, 6)
+  }, [storeInfo, integrations])
+
+  return (
+    <>
+      <style>{`
+        .ob-root {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          background: #0D0D12;
+          font-family: var(--font-sans, system-ui, sans-serif);
+        }
+        .ob-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 24px;
+          height: 52px;
+          border-bottom: 0.5px solid #2A2A35;
+          flex-shrink: 0;
+        }
+        .ob-body {
+          display: flex;
+          flex: 1;
+          overflow: hidden;
+        }
+        .ob-chat {
+          width: 40%;
+          border-right: 0.5px solid #2A2A35;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+        .ob-cockpit {
+          flex: 1;
+          overflow-y: auto;
+        }
+        @media (max-width: 768px) {
+          .ob-body { flex-direction: column; }
+          .ob-chat { width: 100%; border-right: none; border-bottom: 0.5px solid #2A2A35; height: 55vh; }
+          .ob-cockpit { height: 45vh; }
+        }
+      `}</style>
+
+      <div className="ob-root">
+        <header className="ob-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span style={{ fontSize: '15px', fontWeight: 500, color: '#F5F5F7' }}>Guiamos</span>
+            <span style={{ color: '#7C5CFC', fontSize: '12px' }}>✦</span>
+          </div>
+          <span style={{ fontSize: '13px', color: '#5A5A68' }}>
+            Passo {step} de 6
+          </span>
+        </header>
+
+        <div className="ob-body">
+          <div className="ob-chat">
+            <ChatPanel
+              messages={messages}
+              input={input}
+              handleInputChange={handleInputChange}
+              handleSubmit={handleSubmit}
+              isLoading={isLoading}
+              oauthAction={oauthAction}
+            />
+          </div>
+          <div className="ob-cockpit">
+            <CockpitPanel
+              step={step}
+              storeInfo={storeInfo}
+              integrations={integrations}
+            />
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}

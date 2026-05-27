@@ -48,5 +48,6 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
+  // /onboarding and /api/chat are intentionally public — no auth required
   matcher: ['/admin/:path*', '/conta/:path*'],
 }
