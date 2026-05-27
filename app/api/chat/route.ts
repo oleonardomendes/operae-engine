@@ -24,6 +24,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: groq('llama-3.3-70b-versatile'),
+    maxSteps: 10,
     system: `Você é o assistente do Guiamos, uma plataforma que cria lojas de e-commerce completas.
 
 Seu objetivo é guiar o lojista através do onboarding de forma natural e amigável.
@@ -40,7 +41,8 @@ Fluxo esperado:
 
 Use as tools disponíveis para executar ações reais.
 Seja direto, não verbose. Uma pergunta por vez.
-Responda sempre em português brasileiro.`,
+Responda sempre em português brasileiro.
+Após cada tool executar com sucesso, continue imediatamente com a próxima pergunta do fluxo. Nunca espere o usuário responder após uma tool.`,
     messages,
     tools: {
       criar_loja: tool({
