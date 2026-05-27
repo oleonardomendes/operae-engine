@@ -27,23 +27,50 @@ export async function POST(req: Request) {
     maxSteps: 10,
     system: `Você é o assistente do Guiamos. Siga EXATAMENTE esta sequência, uma etapa por vez:
 
-ETAPA 1: Pergunte o nome da loja
-ETAPA 2: Pergunte o segmento/nicho
-ETAPA 3: Pergunte o regime tributário (MEI, Simples Nacional ou Lucro Presumido)
-ETAPA 4: Execute criar_loja com os dados coletados
-ETAPA 5: Instrua conectar Bling via botão OAuth. Execute iniciar_oauth('bling', store_id). Aguarde o usuário confirmar que conectou.
-ETAPA 6: Instrua conectar Mercado Pago. Execute iniciar_oauth('mercado_pago', store_id). Aguarde confirmação.
-ETAPA 7: Instrua conectar Melhor Envio. Execute iniciar_oauth('melhor_envio', store_id). Aguarde confirmação.
-ETAPA 8: Pergunte CEP de origem para frete. Execute salvar_endereco com os dados.
-ETAPA 9: Execute finalizar_onboarding. Parabenize e mostre o link do painel.
+ETAPA 1: Pergunte se a loja está vinculada a um CNPJ ou vai operar como pessoa física (CPF). Apresente como duas opções claras.
+
+SE CNPJ:
+  ETAPA 2: Peça o CNPJ.
+  ETAPA 3: Execute consultar_cnpj com o CNPJ informado.
+  ETAPA 4: Mostre os dados encontrados (nome, regime, segmento) e confirme com o usuário.
+  ETAPA 5: Execute criar_loja com os dados confirmados.
+
+SE CPF (pessoa física):
+  ETAPA 2: Pergunte o nome da loja.
+  ETAPA 3: Pergunte o segmento/nicho.
+  ETAPA 4: Informe que pessoa física opera como MEI ou autônomo e confirme.
+  ETAPA 5: Execute criar_loja com regime 'MEI'.
+
+PARA AMBOS, após criar_loja:
+  ETAPA A: Execute iniciar_oauth('bling', store_id). Instrua o usuário a clicar no botão para conectar. Aguarde confirmação antes de prosseguir.
+  ETAPA B: Execute iniciar_oauth('mercado_pago', store_id). Aguarde confirmação.
+  ETAPA C: Execute iniciar_oauth('melhor_envio', store_id). Aguarde confirmação.
+  ETAPA D: Se veio de CNPJ, o endereço já foi preenchido automaticamente. Confirme com o usuário. Se veio de CPF, pergunte o CEP de origem. Execute salvar_endereco.
+  ETAPA E: Execute finalizar_onboarding. Parabenize e mostre o link do painel.
 
 REGRAS:
 - Uma etapa por vez. Nunca pule etapas.
-- Após tool executar, explique o que aconteceu e instrua a próxima ação claramente.
-- Seja breve e direto. Máximo 2 frases por mensagem.
-- Responda sempre em português brasileiro.`,
+- Após tool executar com sucesso, explique brevemente e instrua a próxima ação.
+- Seja direto. Máximo 2 frases por mensagem.
+- Sempre em português brasileiro.`,
     messages,
     tools: {
+      consultar_cnpj: tool({
+        description: 'Consulta dados da empresa na Receita Federal pelo CNPJ',
+        parameters: z.object({
+          cnpj: z.string().describe('CNPJ com ou sem formatação'),
+        }),
+        execute: async ({ cnpj }) => {
+          const limpo = cnpj.replace(/\D/g, '')
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_APP_URL}/api/cnpj?cnpj=${limpo}`
+          )
+          if (!res.ok) return { sucesso: false, erro: 'CNPJ não encontrado' }
+          const data = await res.json()
+          return { sucesso: true, ...data }
+        },
+      }),
+
       criar_loja: tool({
         description: 'Cria o registro da loja no banco de dados',
         parameters: z.object({
