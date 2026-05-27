@@ -4,7 +4,6 @@ import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useStore } from '@/contexts/StoreContext'
 
 function traduzirErro(msg: string): string {
   if (msg.includes('Invalid login credentials')) return 'E-mail ou senha incorretos'
@@ -14,7 +13,6 @@ function traduzirErro(msg: string): string {
 }
 
 function LoginForm() {
-  const config = useStore()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [aba, setAba] = useState<'login' | 'cadastro'>(
@@ -41,7 +39,7 @@ function LoginForm() {
     if (redirectTo) {
       router.push(decodeURIComponent(redirectTo))
     } else {
-      router.push('/conta')
+      router.push('/dashboard')
     }
     router.refresh()
   }
@@ -66,7 +64,7 @@ function LoginForm() {
       password: senha,
       options: {
         data: { nome },
-        emailRedirectTo: `https://${config.dominio}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
     setLoading(false)
@@ -85,7 +83,7 @@ function LoginForm() {
       <style>{styles}</style>
       <div className="lp-bg">
         <div className="lp-card">
-          <Link href="/" className="lp-logo">{config.nome}</Link>
+          <Link href="/" className="lp-logo">Guiamos</Link>
 
           <div className="lp-abas">
             <button
@@ -187,15 +185,6 @@ function LoginForm() {
             </form>
           )}
 
-          <div className="lp-guest-sep">
-            <div className="lp-sep-line" /><span>ou</span><div className="lp-sep-line" />
-          </div>
-          <Link
-            href={searchParams.get('redirect') ? decodeURIComponent(searchParams.get('redirect')!) : '/'}
-            className="lp-btn-guest"
-          >
-            Continuar sem cadastro →
-          </Link>
         </div>
       </div>
     </>
@@ -346,21 +335,4 @@ const styles = `
     font-size: 13px;
     margin-bottom: 8px;
   }
-  .lp-guest-sep {
-    display: flex; align-items: center; gap: 12px;
-    margin: 20px 0 0;
-    color: var(--muted, #888); font-size: 12px;
-  }
-  .lp-sep-line { flex: 1; height: 1px; background: var(--border, #e5e5e5); }
-  .lp-btn-guest {
-    display: block; text-align: center;
-    margin-top: 12px; padding: 11px;
-    border: 1.5px solid var(--border, #e5e5e5);
-    border-radius: 50px;
-    font-family: var(--ff-body, sans-serif);
-    font-size: 13px; font-weight: 600;
-    color: var(--muted, #888);
-    text-decoration: none; transition: border-color .15s, color .15s;
-  }
-  .lp-btn-guest:hover { border-color: var(--g500, #4a8a4a); color: var(--g700, #2d6a2d); }
 `
